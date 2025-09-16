@@ -166,8 +166,12 @@ class ResNet(nn.Module):
 
     def _init_weights(self, module):
         if isinstance(module, nn.Conv2d):
-            # initialization is based on https://arxiv.org/abs/1502.01852
-            # He normal gaussian with sqrt(2. / out units) std with zero mean
+            """
+            He Normal Initialization
+            - initialization is based on https://arxiv.org/abs/1502.01852
+            - normal gaussian with sqrt(2. / out units) std with zero mean
+            """
+            #
             nn.init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
             if module.bias is not None:
                 nn.init.zeros_(module.bias)
@@ -193,7 +197,6 @@ class ResNet(nn.Module):
 def get_resnet(model_name: str, num_classes: int, is_data_small: bool):
 
     model_name = model_name.lower()
-    small_data_model = ['resnet20', 'resnet32', 'resnet44', 'resnet56', 'resnet68']
 
     model_config_dict = {
         'resnet18': ([2, 2, 2, 2], False,is_data_small),
@@ -205,7 +208,9 @@ def get_resnet(model_name: str, num_classes: int, is_data_small: bool):
         'resnet32': ([5, 5, 5], False, True),
         'resnet44': ([7, 7, 7], False, True),
         'resnet56': ([9, 9, 9], False, True),
-        'resnet68': ([11, 11, 11], False, True)
+        'resnet68': ([11, 11, 11], False, True),
+        'resnet110': ([18, 18, 18], False, True),
+        'resnet1202': ([200, 200, 200], False, True)
     }
 
     model_config = model_config_dict[model_name]
@@ -238,7 +243,7 @@ if __name__ == '__main__':
         print(f"Output shape: {output.shape}")
         print(f"Predictions: {pred}")
 
-    ###################################3
+    ###################################
     # Complete Model Checking
 
 
