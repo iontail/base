@@ -213,6 +213,9 @@ def get_resnet(model_name: str, num_classes: int, is_data_small: bool):
         'resnet1202': ([200, 200, 200], False, True)
     }
 
+    if model_name not in model_config_dict.key():
+        raise ValueError(f"Given model name does not exit in resnet model config. Got {model_name}")
+
     model_config = model_config_dict[model_name]
     return ResNet(model_config[0], num_classes, model_config[1], model_config[2])
 

@@ -24,8 +24,8 @@ class Trainer:
         self.criterion = nn.CrossEntropyLoss()
 
         self.optimizer = self._setup_optimizer(args.optimizer)
-        self.use_grad_clip = False
-        self.grad_clip = 1.0
+        self.grad_clip = self.args.grad_clip
+        self.use_grad_clip = False if self.grad_clip < 0 else True
 
         self.milestones = None # if you specify milestone, then define this instance variable
         self.scheduler = get_scheduler(optimizer=self.optimizer,
@@ -54,25 +54,25 @@ class Trainer:
                 }
             )
 
-        self.eval_freq = args.eval_freq
+        self.val_freq = args.val_freq
 
         
-    def train(self, train_DL, val_DL):
+    def train(self, train_dl, val_dl):
 
         best = float('inf')
         for epoch in range(self.epochs):
             
             self.model.train()
-            loss, acc = self._forward_epoch(train_DL, epoch)
+            loss, acc = self._forward_epoch(train_dl, epoch)
 
             train_metrics = {'loss': loss, 'acc': acc}
 
 
-            if ((epoch + 1) % self.eval_freq == 0) or (epoch == self.epochs - 1):
+            if ((epoch + 1) % self.val_freq == 0) or (epoch == self.epochs - 1):
                 
                 self.model.eval()
                 with torch.no_grad():
-                    val_loss, val_acc = self._forward_epoch(val_DL, epoch)
+                    val_loss, val_acc = self._forward_epoch(val_dl, epoch)
                     val_metrics = {'loss': val_loss, 'acc': val_acc}
 
 
