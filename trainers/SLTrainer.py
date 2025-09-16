@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import os
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torch.optim import SGD, Adam, AdamW
@@ -27,13 +28,13 @@ class Trainer:
         self.grad_clip = 1.0
 
         self.milestones = None # if you specify milestone, then define this instance variable
-        self.scheduler = get_scheduler(self.optimizer,
-                                       args.scheduler,
-                                       args.warmup_epochs,
-                                       0,
-                                       args.epochs,
-                                       1e-6,
-                                       self.milestones
+        self.scheduler = get_scheduler(optimizer=self.optimizer,
+                                       scheduler_name=args.scheduler,
+                                       warmup_epochs=args.warmup_epochs,
+                                       warmup_start_lr=0,
+                                       total_epochs=args.epochs,
+                                       min_lr=1e-6,
+                                       milestones=self.milestones
                                        )
         
         self.use_wandb = args.use_wandb
@@ -57,6 +58,8 @@ class Trainer:
 
         
     def train(self, train_DL, val_DL):
+
+        best = float('inf')
         for epoch in range(self.epochs):
             
             self.model.train()
@@ -65,18 +68,33 @@ class Trainer:
             train_metrics = {'loss': loss, 'acc': acc}
 
 
-            if (epoch + 1) % self.eval_freq == 0:
+            if ((epoch + 1) % self.eval_freq == 0) or (epoch == self.epochs - 1):
                 
                 self.model.eval()
                 with torch.no_grad():
                     val_loss, val_acc = self._forward_epoch(val_DL, epoch)
                     val_metrics = {'loss': val_loss, 'acc': val_acc}
 
+
+                # save checkpoint
+                if val_loss < best - 1e-3:
+                    best = val_loss
+                    self._save_checkpoints(epoch)
+
             else:
                 val_metrics = {}
 
             all_metrics = {'train': train_metrics, 'val': val_metrics}
             self._log_metrics(all_metrics, epoch)
+
+        if self.use_wandb:
+            wandb.finish()
+
+    
+    def _save_checkpoints(self, epoch):
+        prefix = f"{self.args.model.lower()}_best_epoch_{epoch+1}.pth"
+        save_dir = os.path.join('./checkpoints', prefix)
+        torch.save(self.model, save_dir)
 
 
     def _log_metrics(self, metrics, epoch):
@@ -97,18 +115,8 @@ class Trainer:
         print(f"Epoch {epoch} | {' | '.join(log_list)}")
 
         current_lr = self.optimizer.param_groups[0]['lr']
-        if self.wandb_run:
+        if self.use_wandb:
             wandb.log({'learning_rate': current_lr}, step=epoch)
-
-        
-            
-
-
-            
-
-
-
-
 
 
 
@@ -121,7 +129,7 @@ class Trainer:
         for batch in tqdm(loader, leave=False):
 
             data= batch['data'].to(self.device)
-            targets = batch['target'].to(self.devie)
+            targets = batch['targets'].to(self.device)
             samples += data.size(0)
 
             outputs = self.model(data)
