@@ -102,7 +102,11 @@ class ResNetBlock(nn.Sequential):
     
 
 class ResNet(nn.Module):
-    def __init__(self, block_list: list[int], num_classes:int, bottleneck: bool, is_data_small:bool):
+    def __init__(self,
+                 block_list: list[int],
+                 num_classes:int,
+                 bottleneck: bool,
+                 is_data_small:bool):
         super().__init__()
 
 
