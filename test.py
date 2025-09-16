@@ -5,7 +5,7 @@ import numpy as np
 
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
-from factory import get_model
+from models.factory import get_model
 from trainers import Trainer
 
 def _setup_reproducibility(seed: int = 42):

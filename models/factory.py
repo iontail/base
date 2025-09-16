@@ -1,4 +1,4 @@
-from models import get_resnet
+from .ResNet import get_resnet
 
 def get_model(model: str, num_classes: int, is_data_small: bool = True):
     
