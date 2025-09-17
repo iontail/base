@@ -72,7 +72,8 @@ class Bottleneck(nn.Module):
     
 
 class ResNetBlock(nn.Sequential):
-    def __init__(self, block:nn.Module,
+    def __init__(self,
+                 block:nn.Module,
                  in_channels: int,
                  out_channels: int,
                  num_blocks: int,
@@ -94,7 +95,7 @@ class ResNetBlock(nn.Sequential):
 
 
         # after first block, in_channels is changed to out_channels * expansion
-        for i in range(num_blocks-1):
+        for _ in range(num_blocks-1):
             layers.append(block(out_channels * expansion, out_channels, stride=1, downsample=None))
 
         # as it is inherited from nn.Sequential, forward() method automatically defined
@@ -120,7 +121,7 @@ class ResNet(nn.Module):
 
         if is_data_small:
             self.conv1 = nn.Sequential(
-                nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=1, bias=False),
+                nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False),
                 nn.BatchNorm2d(16   ),
                 nn.ReLU()
             )
@@ -213,7 +214,7 @@ def get_resnet(model_name: str, num_classes: int, is_data_small: bool):
         'resnet1202': ([200, 200, 200], False, True)
     }
 
-    if model_name not in model_config_dict.key():
+    if model_name not in model_config_dict.keys():
         raise ValueError(f"Given model name does not exit in resnet model config. Got {model_name}")
 
     model_config = model_config_dict[model_name]
