@@ -63,16 +63,15 @@ class Trainer:
         for epoch in range(self.epochs):
             
             self.model.train()
-            loss, acc = self._forward_epoch(train_dl, epoch)
+            loss, acc = self._forward_epoch(train_dl)
 
             train_metrics = {'loss': loss, 'acc': acc}
-
 
             if ((epoch + 1) % self.val_freq == 0) or (epoch == self.epochs - 1):
                 
                 self.model.eval()
                 with torch.no_grad():
-                    val_loss, val_acc = self._forward_epoch(val_dl, epoch)
+                    val_loss, val_acc = self._forward_epoch(val_dl)
                     val_metrics = {'loss': val_loss, 'acc': val_acc}
 
 
@@ -84,6 +83,9 @@ class Trainer:
             else:
                 val_metrics = {}
 
+            if self.scheduler is not None:
+                self.scheduler.step()
+
             all_metrics = {'train': train_metrics, 'val': val_metrics}
             self._log_metrics(all_metrics, epoch)
 
@@ -92,9 +94,9 @@ class Trainer:
 
     
     def _save_checkpoints(self, epoch):
-        prefix = f"{self.args.model.lower()}_best_epoch_{epoch+1}.pth"
+        prefix = f"{self.args.model.lower()}_best.pth"
         save_dir = os.path.join('./checkpoints', prefix)
-        torch.save(self.model, save_dir)
+        torch.save(self.model.state_dict(), save_dir)
 
 
     def _log_metrics(self, metrics, epoch):
@@ -134,26 +136,32 @@ class Trainer:
 
             outputs = self.model(data)
             loss = self.criterion(outputs, targets)
-            total_loss += loss.item()
+            total_loss += loss.item() * data.size(0)
 
-            self.optimizer.zero_grad()
-            loss.backward()
+            if self.model.training:
+                self.optimizer.zero_grad()
+                loss.backward()
 
-            if self.use_grad_clip:
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip)
-    
-            self.optimizer.step()
+                if self.use_grad_clip:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip)
+        
+                self.optimizer.step()
 
-            if self.scheduler is not None:
-                self.scheduler.step()
-
-            preds = outputs.argmax(outputs, dim=-1)
+            preds = outputs.argmax(dim=1)
             correct += (preds == targets).sum().item()
 
         acc = correct / samples * 100
-        return (total_loss / samples, acc)
+        avg_loss = total_loss / samples
+        return (avg_loss, acc)
     
 
+    def evaluate(self, loader: DataLoader):
+
+        self.model.eval()
+        with torch.no_grad():
+            loss, acc = self._forward_epoch(loader)
+        return loss, acc
+    
 
     def _setup_optimizer(self, optimizer_name: str = 'sgd'):
         
@@ -179,9 +187,3 @@ class Trainer:
                         betas=(0.9, 0.999), # uses default (change if needed)
                         weight_decay=self.args.weight_decay
                         )
-
-        
-
-            
-
-

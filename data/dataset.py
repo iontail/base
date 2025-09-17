@@ -20,14 +20,9 @@ def get_dataset(name: str = 'cifar10',
     cifar100_std = [0.2673, 0.2564, 0.2762]
 
 
-    default_augment = [transforms.ToTensor()]
-    if name == 'cifar10':
-        default_augment.append(transforms.Normalize(mean=cifar10_mean, std=cifar10_std))
-    elif name == 'cifar100':
-        default_augment.append(transforms.Normalize(mean=cifar100_mean, std=cifar100_std))
-
+    default_augment_list = [transforms.ToTensor()]
     transform_list = []
-    tensor_transform_list = []
+
 
     if default_augment:
         transform_list.append(transforms.RandomCrop(32))
@@ -39,10 +34,18 @@ def get_dataset(name: str = 'cifar10',
     if color_jitter:
         transform_list.append(transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1))
 
-    if rand_erasing:
-        tensor_transform_list.append(transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3)))
+    if rand_erasing and train: # RandomErasing must be appled between ToTensor() and Normalize()
+        default_augment_list.append(transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3)))
 
-    total_transforms =transforms.Compose(transform_list + default_augment + tensor_transform_list)
+    if name == 'cifar10':
+        default_augment_list.append(transforms.Normalize(mean=cifar10_mean, std=cifar10_std))
+    elif name == 'cifar100':
+        default_augment_list.append(transforms.Normalize(mean=cifar100_mean, std=cifar100_std))
+
+    if train:
+        total_transforms = transforms.Compose(transform_list + default_augment_list)
+    else:
+        total_transforms = transforms.Compose(default_augment_list)
 
 
     if name == 'cifar10':

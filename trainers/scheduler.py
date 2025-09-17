@@ -41,7 +41,7 @@ class WarmupCosineScheduler(LambdaLR):
                  ):
         
         # http://github.com/pytorch/pytorch/blob/v2.8.0/torch/optim/optimizer.py#L701-707
-        base_lr = optimizer.param_group[0]['lr']
+        base_lr = optimizer.param_groups[0]['lr']
         min_lr_ratio = min_lr / base_lr
         # as we multiply ratio base_lr
 
@@ -73,7 +73,7 @@ class WarmupStepScheduler(LambdaLR):
         milestones = sorted(milestones)
 
         def lr_lambda(step):
-            if warmup_epochs > 0 or step < warmup_epochs: # applting this if statement only if using warmup
+            if step < warmup_epochs:
                 return warmup_fn(step, warmup_epochs, warmup_start_lr)
             else:
                 # https://github.com/pytorch/pytorch/blob/v2.8.0/torch/optim/lr_scheduler.py#L477

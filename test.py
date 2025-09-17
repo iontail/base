@@ -1,6 +1,7 @@
 import random
 import torch
 import numpy as np
+import os
 
 
 from arguments import parse_arguments
@@ -51,13 +52,19 @@ def test():
 
     model = get_model(model=args.model,
                       num_classes=args.num_classes,
-                      is_data_small=True if args.data in ['cifar10', 'cifar100', 'tinyimagenet'] else False
+                      is_data_small=True if args.data in ['cifar10', 'cifar100', 'tinyimagenet'] else False,
+                      growth_rate=args.growth_rate
                       )
+    
+    model_path = './checkpoints/resnet18_best.pth' # change the path
+    checkpoint = torch.load(model_path, map_location=device)
+    model.load_state_dict(checkpoint)
     model.to(device)
 
     if args.learning == 'sl':
         trainer = Trainer(model=model, args=args, device=device)
-        final_loss, final_acc = trainer._forward_epoch(test_dl)
+        
+        final_loss, final_acc = trainer.evaluate(test_dl)
         print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
 
     else:
@@ -67,8 +74,3 @@ def test():
 
 if __name__ == '__main__':
     test()
-
-
-
-    
-

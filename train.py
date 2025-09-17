@@ -56,7 +56,8 @@ def main():
 
     model = get_model(model=args.model,
                       num_classes=args.num_classes,
-                      is_data_small=True if args.data in ['cifar10', 'cifar100', 'tinyimagenet'] else False
+                      is_data_small=True if args.data in ['cifar10', 'cifar100', 'tinyimagenet'] else False,
+                      growth_rate=args.growth_rate
                       )
     model.to(device)
 
@@ -68,14 +69,9 @@ def main():
     trainer.train(train_dl, val_dl)
 
     if args.learning == 'sl':
-        final_loss, final_acc = trainer._forward_epoch(val_dl)
+        final_loss, final_acc = trainer.evaluate(val_dl)
         print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
 
 
 if __name__ == '__main__':
     main()
-
-
-
-    
-

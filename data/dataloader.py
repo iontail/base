@@ -9,15 +9,12 @@ def basic_collate_fn(batch):
     target_list = [data[1] for data in batch]
 
     data = torch.stack(data_list)
-    targets = torch.stack(target_list)
+    targets = torch.tensor(target_list)
 
     return {
         'data': data,
         'targets': targets
     }
-
-
-
 
 def get_dataloader(name: str = 'cifar10', root: str = './data', train: bool = False, args = None):
     
