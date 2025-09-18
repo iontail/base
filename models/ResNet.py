@@ -122,7 +122,7 @@ class ResNet(nn.Module):
         if is_data_small:
             self.conv1 = nn.Sequential(
                 nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False),
-                nn.BatchNorm2d(16   ),
+                nn.BatchNorm2d(16),
                 nn.ReLU()
             )
 
