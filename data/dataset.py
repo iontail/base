@@ -5,7 +5,8 @@ from torchvision import transforms
 def get_dataset(name: str = 'cifar10',
                 root: str = './data',
                 train: bool = False,
-                rand_crop: bool = True,
+                rand_crop: bool = False,
+                horizontal_flip: bool = False,
                 rand_augment: bool = False,
                 color_jitter: bool = False,
                 rand_erasing: bool = False
@@ -21,16 +22,18 @@ def get_dataset(name: str = 'cifar10',
 
 
     default_augment_list = [transforms.ToTensor()]
-    transform_list = [transforms.RandomHorizontalFlip(0.5)]
+    transform_list = []
 
+    if horizontal_flip and train:
+        transform_list.append(transforms.RandomHorizontalFlip(0.5))
 
-    if rand_crop:
+    if rand_crop and train:
         transform_list.append(transforms.RandomCrop(32))
         
-    if rand_augment:
+    if rand_augment and train:
         transform_list.append(transforms.RandAugment(num_ops=2, magnitude=9))
 
-    if color_jitter:
+    if color_jitter and train:
         transform_list.append(transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1))
 
     if rand_erasing and train: # RandomErasing must be appled between ToTensor() and Normalize()

@@ -17,6 +17,7 @@ def parse_arguments():
     parser.add_argument('--data', type=str, default='cifar10')
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--rand_crop', action='store_true')
+    parser.add_argument('--horizontal_flip', action='store_true')
     parser.add_argument('--rand_augment', action='store_true')
     parser.add_argument('--color_jittering', action='store_true')
     parser.add_argument('--rand_erasing', action='store_true')
