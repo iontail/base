@@ -5,7 +5,7 @@ from torchvision import transforms
 def get_dataset(name: str = 'cifar10',
                 root: str = './data',
                 train: bool = False,
-                default_augment: bool = True,
+                rand_crop: bool = True,
                 rand_augment: bool = False,
                 color_jitter: bool = False,
                 rand_erasing: bool = False
@@ -21,12 +21,11 @@ def get_dataset(name: str = 'cifar10',
 
 
     default_augment_list = [transforms.ToTensor()]
-    transform_list = []
+    transform_list = [transforms.RandomHorizontalFlip(0.5)]
 
 
-    if default_augment:
+    if rand_crop:
         transform_list.append(transforms.RandomCrop(32))
-        transform_list.append(transforms.RandomHorizontalFlip(0.5))
         
     if rand_augment:
         transform_list.append(transforms.RandAugment(num_ops=2, magnitude=9))
@@ -41,6 +40,7 @@ def get_dataset(name: str = 'cifar10',
         default_augment_list.append(transforms.Normalize(mean=cifar10_mean, std=cifar10_std))
     elif name == 'cifar100':
         default_augment_list.append(transforms.Normalize(mean=cifar100_mean, std=cifar100_std))
+
 
     if train:
         total_transforms = transforms.Compose(transform_list + default_augment_list)

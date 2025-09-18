@@ -31,7 +31,7 @@ class Trainer:
         self.scheduler = get_scheduler(optimizer=self.optimizer,
                                        scheduler_name=args.scheduler,
                                        warmup_epochs=args.warmup_epochs,
-                                       warmup_start_lr=0,
+                                       warmup_start_lr=args.warmup_start_lr,
                                        total_epochs=args.epochs,
                                        min_lr=1e-6,
                                        milestones=self.milestones
