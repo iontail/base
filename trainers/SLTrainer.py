@@ -37,6 +37,20 @@ class Trainer:
                                        milestones=self.milestones
                                        )
         
+        
+
+        self.val_freq = args.val_freq
+
+
+        os.makedirs('./checkpoints', exist_ok=True)
+        prefix = f"{self.args.model.lower()}_best.pth"
+        self.save_path = os.path.join('./checkpoints', prefix)
+
+        
+
+        
+    def train(self, train_dl, val_dl):
+
         self.use_wandb = args.use_wandb
         if self.use_wandb:
             wandb.init(
@@ -53,18 +67,6 @@ class Trainer:
                     'weight_decay': args.weight_decay
                 }
             )
-
-        self.val_freq = args.val_freq
-
-
-        os.makedirs('./checkpoints', exist_ok=True)
-        prefix = f"{self.args.model.lower()}_best.pth"
-        self.save_path = os.path.join('./checkpoints', prefix)
-
-        
-
-        
-    def train(self, train_dl, val_dl):
 
         best = float('inf')
         for epoch in range(self.epochs):
