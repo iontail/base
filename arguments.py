@@ -18,7 +18,7 @@ def parse_arguments():
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--default_augment', action='store_true')
     parser.add_argument('--rand_augment', action='store_true')
-    parser.add_argument('--color_jittering', action='store_true')
+    parser.add_argument('--color_jitter', action='store_true')
     parser.add_argument('--rand_erasing', action='store_true')
 
     # training
