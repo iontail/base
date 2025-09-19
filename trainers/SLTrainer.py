@@ -27,7 +27,7 @@ class Trainer:
         self.grad_clip = self.args.grad_clip
         self.use_grad_clip = False if self.grad_clip < 0 else True
 
-        self.milestones = [92, 138] # if you specify milestone, then define this instance variable
+        self.milestones = [82, 123] # if you specify milestone, then define this instance variable
         self.scheduler = get_scheduler(optimizer=self.optimizer,
                                        scheduler_name=args.scheduler,
                                        warmup_epochs=args.warmup_epochs,
@@ -51,20 +51,20 @@ class Trainer:
         
     def train(self, train_dl, val_dl):
 
-        self.use_wandb = args.use_wandb
+        self.use_wandb = self.args.use_wandb
         if self.use_wandb:
             wandb.init(
                 project=f"ELLab_basecode",
-                name=f"{args.model.lower()}",
+                name=f"{self.args.model.lower()}",
                 config={
-                    'model': args.model,
-                    'data': args.data,
-                    'optimizer': args.optimizer,
-                    'scheduler': args.scheduler,
-                    'batch_size': args.batch_size,
-                    'lr': args.lr,
-                    'cutmix': args.cutmix,
-                    'weight_decay': args.weight_decay
+                    'model': self.args.model,
+                    'data': self.args.data,
+                    'optimizer': self.args.optimizer,
+                    'scheduler': self.args.scheduler,
+                    'batch_size': self.args.batch_size,
+                    'lr': self.args.lr,
+                    'cutmix': self.args.cutmix,
+                    'weight_decay': self.args.weight_decay
                 }
             )
 
@@ -114,7 +114,7 @@ class Trainer:
                 wandb.log(metric_dict, step=epoch)
 
             metric_items = [f"{k}: {v:.4f}" for k, v in results.items()]
-            log_list.append(f"{phase.upper()}: {' | '.join(metric_items)}")
+            log_list.append(f"{phase}: {' | '.join(metric_items)}")
 
 
         print(f"Epoch {epoch} | {' | '.join(log_list)}")

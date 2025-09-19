@@ -23,7 +23,7 @@ def parse_arguments():
 
     # training
     parser.add_argument('--learning', type=str, default='sl')
-    parser.add_argument('--epochs', type=int, default=182)
+    parser.add_argument('--epochs', type=int, default=164)
     parser.add_argument('--optimizer', type=str, default='sgd')
     parser.add_argument('--scheduler', type=str, default='constant')
     parser.add_argument('--warmup_epochs', type=int, default=0)
