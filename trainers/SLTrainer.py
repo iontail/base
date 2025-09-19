@@ -45,6 +45,7 @@ class Trainer:
         os.makedirs('./checkpoints', exist_ok=True)
         prefix = f"{self.args.model.lower()}_best.pth"
         self.save_path = os.path.join('./checkpoints', prefix)
+        self.data_name = args.data 
 
         
 
@@ -110,7 +111,7 @@ class Trainer:
                 continue
 
             if self.use_wandb:
-                metric_dict = {f"{phase}/{k}": v for k, v in results.items()}
+                metric_dict = {f"{self.data_name}/{phase}/{k}": v for k, v in results.items()}
                 wandb.log(metric_dict, step=epoch)
 
             metric_items = [f"{k}: {v:.4f}" for k, v in results.items()]
