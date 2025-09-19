@@ -198,8 +198,6 @@ class PreActResNet(nn.Module):
 
 def get_preactresnet(model_name: str, num_classes: int, is_data_small: bool):
 
-    model_name = model_name.lower()
-
     model_config_dict = {
         'preactresnet110': ([18, 18, 18], False,is_data_small),
         'preactresnet164': ([18, 18, 18], True, is_data_small),

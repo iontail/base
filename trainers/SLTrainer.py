@@ -27,7 +27,7 @@ class Trainer:
         self.grad_clip = self.args.grad_clip
         self.use_grad_clip = False if self.grad_clip < 0 else True
 
-        self.milestones = None # if you specify milestone, then define this instance variable
+        self.milestones = [92, 138] # if you specify milestone, then define this instance variable
         self.scheduler = get_scheduler(optimizer=self.optimizer,
                                        scheduler_name=args.scheduler,
                                        warmup_epochs=args.warmup_epochs,
@@ -56,6 +56,13 @@ class Trainer:
 
         self.val_freq = args.val_freq
 
+
+        os.makedirs('./checkpoints', exist_ok=True)
+        prefix = f"{self.args.model.lower()}_best.pth"
+        self.save_path = os.path.join('./checkpoints', prefix)
+
+        
+
         
     def train(self, train_dl, val_dl):
 
@@ -78,7 +85,7 @@ class Trainer:
                 # save checkpoint
                 if val_loss < best - 1e-3:
                     best = val_loss
-                    self._save_checkpoints(epoch)
+                    torch.save(self.model.state_dict(), self.save_path)
 
             else:
                 val_metrics = {}
@@ -91,12 +98,6 @@ class Trainer:
 
         if self.use_wandb:
             wandb.finish()
-
-    
-    def _save_checkpoints(self, epoch):
-        prefix = f"{self.args.model.lower()}_best.pth"
-        save_dir = os.path.join('./checkpoints', prefix)
-        torch.save(self.model.state_dict(), save_dir)
 
 
     def _log_metrics(self, metrics, epoch):

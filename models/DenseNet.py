@@ -192,8 +192,6 @@ def get_densenet(model_name: str,
                  growth_rate: int = None
                  ):
 
-    model_name = model_name.lower()
-
     model_config_dict = {
         'densenet121': ([6, 12, 24, 16], num_classes, 32, 0.5, True, False),
         'densenet168': ([6, 12, 32, 32], num_classes, 32, 0.5, True, False),

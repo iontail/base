@@ -56,10 +56,10 @@ def test():
                       growth_rate=args.growth_rate
                       )
     
-    model_path = './checkpoints/resnet18_best.pth' # change the path
+    model.to(device)
+    model_path = './checkpoints/resnet44_best.pth' # change the path
     checkpoint = torch.load(model_path, map_location=device)
     model.load_state_dict(checkpoint)
-    model.to(device)
 
     if args.learning == 'sl':
         trainer = Trainer(model=model, args=args, device=device)

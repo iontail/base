@@ -196,9 +196,7 @@ class ResNet(nn.Module):
     
 
 def get_resnet(model_name: str, num_classes: int, is_data_small: bool):
-
-    model_name = model_name.lower()
-
+    
     model_config_dict = {
         'resnet18': ([2, 2, 2, 2], False,is_data_small),
         'resnet34': ([3, 4, 6, 3], False, is_data_small),
