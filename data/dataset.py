@@ -28,6 +28,7 @@ def get_dataset(name: str = 'cifar10',
         transform_list.append(transforms.RandomHorizontalFlip(0.5))
 
     if rand_crop and train:
+        transform_list.append(transforms.Pad(4))
         transform_list.append(transforms.RandomCrop(32))
         
     if rand_augment and train:
