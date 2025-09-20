@@ -27,7 +27,8 @@ class Trainer:
         self.grad_clip = self.args.grad_clip
         self.use_grad_clip = False if self.grad_clip < 0 else True
 
-        self.milestones = [82, 123] # if you specify milestone, then define this instance variable
+        #self.milestones = [82, 123] # if you specify milestone, then define this instance variable
+        self.milestones = [150, 225]
         self.scheduler = get_scheduler(optimizer=self.optimizer,
                                        scheduler_name=args.scheduler,
                                        warmup_epochs=args.warmup_epochs,
@@ -86,8 +87,8 @@ class Trainer:
 
 
                 # save checkpoint
-                if val_loss < best - 1e-3:
-                    best = val_loss
+                if val_acc > best + 1e-3:
+                    best = val_acc
                     torch.save(self.model.state_dict(), self.save_path)
 
             else:

@@ -98,7 +98,7 @@ class DenseNet(nn.Module):
             in_channels = 2 * growth_rate if bottleneck else 16
             self.conv = nn.Sequential(
                 nn.Conv2d(3, in_channels, kernel_size=3, padding=1, stride=1, bias=False),
-                nn.BatchNorm2d(16),
+                nn.BatchNorm2d(in_channels),
                 nn.ReLU()
             )
         

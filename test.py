@@ -57,7 +57,7 @@ def test():
                       )
     
     model.to(device)
-    model_path = './checkpoints/resnet44_best.pth' # change the path
+    model_path = f'./checkpoints/{args.model}_best.pth' # change the path
     checkpoint = torch.load(model_path, map_location=device)
     model.load_state_dict(checkpoint)
 

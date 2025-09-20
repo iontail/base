@@ -25,7 +25,7 @@ def parse_arguments():
     parser.add_argument('--learning', type=str, default='sl')
     parser.add_argument('--epochs', type=int, default=164)
     parser.add_argument('--optimizer', type=str, default='sgd')
-    parser.add_argument('--scheduler', type=str, default='constant')
+    parser.add_argument('--scheduler', type=str, default='step')
     parser.add_argument('--warmup_epochs', type=int, default=0)
     parser.add_argument('--warmup_start_lr', type=float, default=1e-2)
     parser.add_argument('--batch_size', type=int, default=128)
