@@ -27,8 +27,8 @@ class Trainer:
         self.grad_clip = self.args.grad_clip
         self.use_grad_clip = False if self.grad_clip < 0 else True
 
-        #self.milestones = [82, 123] # if you specify milestone, then define this instance variable
-        self.milestones = [150, 225]
+        self.milestones = [82, 123] # if you specify milestone, then define this instance variable
+        #self.milestones = [150, 225]
         self.scheduler = get_scheduler(optimizer=self.optimizer,
                                        scheduler_name=args.scheduler,
                                        warmup_epochs=args.warmup_epochs,
@@ -70,7 +70,7 @@ class Trainer:
                 }
             )
 
-        best = float('inf')
+        best = float('-inf')
         for epoch in range(self.epochs):
             
             self.model.train()
@@ -98,13 +98,13 @@ class Trainer:
                 self.scheduler.step()
 
             all_metrics = {'train': train_metrics, 'val': val_metrics}
-            self._log_metrics(all_metrics, epoch)
+            self._log_metrics(all_metrics, best, epoch)
 
         if self.use_wandb:
             wandb.finish()
 
 
-    def _log_metrics(self, metrics, epoch):
+    def _log_metrics(self, metrics, best, epoch):
 
         log_list = []
         for phase, results in metrics.items():
@@ -123,7 +123,10 @@ class Trainer:
 
         current_lr = self.optimizer.param_groups[0]['lr']
         if self.use_wandb:
-            wandb.log({'learning_rate': current_lr}, step=epoch)
+            wandb.log({
+                'learning_rate': current_lr,
+                'best': best
+            }, step=epoch)
 
 
 
