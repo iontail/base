@@ -138,15 +138,16 @@ class ViT(nn.Module):
         self.encoder = Encoder(in_channels, seq_len, num_blocks, num_heads, drop_p)
         self.ln = nn.LayerNorm(in_channels)
 
-        if not fine_tuning:
-            head_layers = OrderedDict()
+        head_layers = OrderedDict()
+        if not fine_tuning: 
             head_layers["pre_logits"] = nn.Linear(in_channels, in_channels)
             head_layers["act"] = nn.Tanh()
             head_layers["head"] = nn.Linear(in_channels, num_classes)
             self.heads = nn.Sequential(head_layers)
         
         else:
-            self.heads = nn.Linear(in_channels, num_classes)
+            head_layers["head"] = nn.Linear(in_channels, num_classes)
+            self.heads = nn.Sequential(head_layers)
 
         self.apply(self._init_weights)
 
