@@ -1,1 +1,2 @@
-from .SLTrainer import Trainer
+from .Trainer import Trainer
+from .SL import SL

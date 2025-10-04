@@ -2,11 +2,10 @@ import random
 import torch
 import numpy as np
 
-
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
 from models.factory import get_model
-from trainers import Trainer
+from trainers import Trainer, SL
 
 def _setup_reproducibility(seed: int = 42):
     random.seed(seed)
@@ -59,10 +58,11 @@ def main():
                       is_data_small=True if args.data in ['cifar10', 'cifar100', 'tinyimagenet'] else False,
                       growth_rate=args.growth_rate
                       )
-    model.to(device)
+    
 
     if args.learning == 'sl':
-        trainer = Trainer(model=model, args=args, device=device)
+        model_trainer = SL(model).to(device)
+        trainer = Trainer(model=model_trainer, args=args, device=device)
     else:
         pass
 

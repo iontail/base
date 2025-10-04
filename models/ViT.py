@@ -195,7 +195,7 @@ def get_vit(model_name: str,
         'vitbase32':  (768, 32, 12, 12),
         'vitlarge16':  (1024, 16, 24, 16),
         'vitlarge32':  (1024, 32, 24, 16),
-        'vithuge16':  (1280, 16, 32, 16)
+        'vithuge14':  (1280, 14, 32, 16)
     }
 
     # special case for DenseNet100 k=12 or k=24
@@ -227,11 +227,11 @@ if __name__ == '__main__':
 
 
     device = 'cpu'
-    model = get_vit('vitbase16', 1000, 224).to(device) # for comparison with # of params in table 6
+    model = get_vit('vithuge14', 1000, 224).to(device) # for comparison with # of params in table 6
 
     model_summary(model)
 
-    
+    """
     with torch.no_grad():
         model.eval()
 
@@ -241,5 +241,6 @@ if __name__ == '__main__':
 
         print(f"Output shape: {output.shape}")
         print(f"Predictions: {pred}")
+    """
     ###################################
     # Complete Model Checking

@@ -1,8 +1,8 @@
 from .ResNet import get_resnet
 from .PreActResNet import get_preactresnet
 from .DenseNet import get_densenet
-
-def get_model(model: str, num_classes: int, is_data_small: bool = True, growth_rate: int = 12):
+from .ViT import get_vit
+def get_model(model: str, num_classes: int, is_data_small: bool = True, growth_rate: int = 12, img_size: int = 32):
     
     model = model.lower()
     if 'preactresnet' in model:
@@ -13,6 +13,7 @@ def get_model(model: str, num_classes: int, is_data_small: bool = True, growth_r
 
     elif 'densenet' in model:
         model = get_densenet(model_name=model, num_classes=num_classes, growth_rate=growth_rate)
-
+    elif 'vit' in model:
+        model = get_vit(model_name=model, num_classes=num_classes, img_size=img_size)
 
     return model

@@ -20,9 +20,6 @@ class Trainer:
         self.device = device
         self.epochs = args.epochs
 
-
-        self.criterion = nn.CrossEntropyLoss()
-
         self.optimizer = self._setup_optimizer(args.optimizer)
         self.grad_clip = self.args.grad_clip
         self.use_grad_clip = False if self.grad_clip < 0 else True
@@ -89,7 +86,7 @@ class Trainer:
                 # save checkpoint
                 if val_acc > best + 1e-3:
                     best = val_acc
-                    torch.save(self.model.state_dict(), self.save_path)
+                    torch.save(self.model.model.state_dict(), self.save_path)
 
             else:
                 val_metrics = {}
@@ -142,8 +139,7 @@ class Trainer:
             targets = batch['targets'].to(self.device)
             samples += data.size(0)
 
-            outputs = self.model(data)
-            loss = self.criterion(outputs, targets)
+            outputs, loss = self.model(data, targets)
             total_loss += loss.item() * data.size(0)
 
             if self.model.training:

@@ -1,13 +1,12 @@
 import random
 import torch
 import numpy as np
-import os
-
 
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
 from models.factory import get_model
-from trainers import Trainer
+from trainers import Trainer, SL
+
 
 def _setup_reproducibility(seed: int = 42):
     random.seed(seed)
@@ -53,16 +52,20 @@ def test():
     model = get_model(model=args.model,
                       num_classes=args.num_classes,
                       is_data_small=True if args.data in ['cifar10', 'cifar100', 'tinyimagenet'] else False,
-                      growth_rate=args.growth_rate
+                      growth_rate=args.growth_rate,
+                      img_size=args.img_size
                       )
     
-    model.to(device)
+    
     model_path = f'./checkpoints/{args.model}_best.pth' # change the path
     checkpoint = torch.load(model_path, map_location=device)
-    model.load_state_dict(checkpoint)
+    
 
     if args.learning == 'sl':
-        trainer = Trainer(model=model, args=args, device=device)
+        model.to(device)
+        model_trainer = SL(model)
+        model.load_state_dict(checkpoint)
+        trainer = Trainer(model=model_trainer, args=args, device=device)
         
         final_loss, final_acc = trainer.evaluate(test_dl)
         print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
