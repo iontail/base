@@ -136,6 +136,7 @@ class ViT(nn.Module):
         self.patch_embed = nn.Conv2d(3, in_channels, kernel_size=patch_size, stride=patch_size)
         self.cls_token = nn.Parameter(torch.zeros(1, 1, in_channels))
         self.encoder = Encoder(in_channels, seq_len, num_blocks, num_heads, drop_p)
+        self.ln = nn.LayerNorm(in_channels)
 
         if not fine_tuning:
             head_layers = OrderedDict()
@@ -179,6 +180,7 @@ class ViT(nn.Module):
 
         out = self.encoder(out)
         cls = out[:, 0, :]
+        cls = self.ln(cls)
         preds = self.heads(cls)
         return preds
     
@@ -227,11 +229,11 @@ if __name__ == '__main__':
 
 
     device = 'cpu'
-    model = get_vit('vithuge14', 1000, 224).to(device) # for comparison with # of params in table 6
+    model = get_vit('vitbase32', 1000, 224).to(device) # for comparison with # of params in table 6
 
     model_summary(model)
 
-    """
+    
     with torch.no_grad():
         model.eval()
 
@@ -241,6 +243,6 @@ if __name__ == '__main__':
 
         print(f"Output shape: {output.shape}")
         print(f"Predictions: {pred}")
-    """
+
     ###################################
     # Complete Model Checking
