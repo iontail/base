@@ -206,7 +206,7 @@ def get_preactresnet(model_name: str, num_classes: int, is_data_small: bool):
     }
 
     if model_name not in model_config_dict.keys():
-        raise ValueError(f"Given model name does not exit in resnet model config. Got {model_name}")
+        raise ValueError(f"Given model name does not exit in PreActResNet model config. Got {model_name}")
 
     model_config = model_config_dict[model_name]
     return PreActResNet(model_config[0], num_classes, model_config[1], model_config[2])

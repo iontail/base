@@ -7,6 +7,7 @@ from data.dataloader import get_dataloader
 from models.factory import get_model
 from trainers import Trainer, SL
 
+
 def _setup_reproducibility(seed: int = 42):
     random.seed(seed)
     np.random.seed(seed)

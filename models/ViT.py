@@ -203,7 +203,7 @@ def get_vit(model_name: str,
 
     # special case for DenseNet100 k=12 or k=24
     if model_name not in model_config_dict.keys():
-        raise ValueError(f"Given model name does not exit in resnet model config. Got {model_name}")
+        raise ValueError(f"Given model name does not exit in ViT model config. Got {model_name}")
 
     model_config = model_config_dict[model_name]
     return ViT(

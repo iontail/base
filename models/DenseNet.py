@@ -208,7 +208,7 @@ def get_densenet(model_name: str,
     if model_name == 'densenet100' and growth_rate not in [12, 24]:
         raise ValueError(f"Growth rate must be one of [12, 24]. Got {growth_rate}")
     if model_name not in model_config_dict.keys():
-        raise ValueError(f"Given model name does not exit in resnet model config. Got {model_name}")
+        raise ValueError(f"Given model name does not exit in DenseNet model config. Got {model_name}")
 
     model_config = model_config_dict[model_name]
     return DenseNet(block_list=model_config[0],
