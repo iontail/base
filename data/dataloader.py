@@ -3,7 +3,8 @@ from torch.utils.data import DataLoader
 
 from .dataset import get_dataset
 
-
+# https://github.com/pytorch/pytorch/blob/v2.8.0/torch/utils/data/_utils/fetch.py
+# get batch(preprocessed data) and return as dict
 def basic_collate_fn(batch):
     data_list = [data[0] for data in batch]
     target_list = [data[1] for data in batch]

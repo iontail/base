@@ -28,6 +28,7 @@ def get_dataset(name: str = 'cifar10',
         transform_list.append(transforms.RandomCrop(32))
         transform_list.append(transforms.RandomHorizontalFlip(0.5))
 
+    """
     if rand_augment and train:
         transform_list.append(transforms.RandAugment(num_ops=2, magnitude=9))
 
@@ -36,7 +37,8 @@ def get_dataset(name: str = 'cifar10',
 
     if rand_erasing and train: # RandomErasing must be appled between ToTensor() and Normalize()
         default_augment_list.append(transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3)))
-
+    """
+    
     if name == 'cifar10':
         default_augment_list.append(transforms.Normalize(mean=cifar10_mean, std=cifar10_std))
     elif name == 'cifar100':
