@@ -86,7 +86,7 @@ class Trainer:
                 # save checkpoint
                 if val_acc > best + 1e-3:
                     best = val_acc
-                    torch.save(self.model.model.state_dict(), self.save_path)
+                    torch.save(self.model.state_dict(), self.save_path)
 
             else:
                 val_metrics = {}

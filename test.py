@@ -61,11 +61,10 @@ def test():
     checkpoint = torch.load(model_path, map_location=device)
     
 
+    model.to(device)
+    model.load_state_dict(checkpoint)
     if args.learning == 'sl':
-        model.to(device)
-        model_trainer = SL(model)
-        model.load_state_dict(checkpoint)
-        trainer = Trainer(model=model_trainer, args=args, device=device)
+        trainer = Trainer(model=model, args=args, device=device)
         
         final_loss, final_acc = trainer.evaluate(test_dl)
         print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
