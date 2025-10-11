@@ -93,7 +93,8 @@ def get_mlpmixer(model_name: str, num_classes: int, img_size: int):
         'mlpmixerbase32': (768, 384, 3072, 12, 32, 0.0),
         'mlpmixerlarge16': (1024, 512, 4096, 24, 16, 0.0),
         'mlpmixerlarge32': (1024, 512, 4096, 24, 32, 0.0),
-        'mlpmixerhuge14': (1280, 640, 5120, 32, 14, 0.0)
+        'mlpmixerhuge14': (1280, 640, 5120, 32, 14, 0.0),
+        'cifarmlpmixer': (512, 256, 2048, 8, 4, 0.0) # for cifar data
     }
 
     if model_name not in model_config_dict.keys():

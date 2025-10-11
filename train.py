@@ -31,7 +31,6 @@ def _setup_device(device: str = 'auto'):
             raise ValueError(f"Device must be one of {['cuda', 'cpu']}. Got {device}")
         
         use_device = torch.device(device)
-
     return use_device
 
 
@@ -57,7 +56,8 @@ def main():
     model = get_model(model=args.model,
                       num_classes=args.num_classes,
                       is_data_small=True if args.data in ['cifar10', 'cifar100', 'tinyimagenet'] else False,
-                      growth_rate=args.growth_rate
+                      growth_rate=args.growth_rate,
+                      img_size=args.img_size
                       )
     
     model.to(device)

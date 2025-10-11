@@ -8,7 +8,6 @@ def parse_arguments():
     # model
     parser.add_argument('--model', type=str, default='resnet44')
     parser.add_argument('--device', type=str, default='auto')
-    parser.add_argument('--task', type=str, default='sl')
 
     # model specified arguments
     parser.add_argument('--growth_rate', type=int, default=12,

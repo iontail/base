@@ -31,7 +31,6 @@ def _setup_device(device: str = 'auto'):
             raise ValueError(f"Device must be one of {['cuda', 'cpu']}. Got {device}")
         
         use_device = torch.device(device)
-
     return use_device
 
 
