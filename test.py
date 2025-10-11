@@ -5,7 +5,7 @@ import numpy as np
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
 from models.factory import get_model
-from trainers import Trainer, SL
+from trainers import Trainer
 
 
 def _setup_reproducibility(seed: int = 42):
@@ -63,15 +63,10 @@ def test():
 
     model.to(device)
     model.load_state_dict(checkpoint)
-    if args.learning == 'sl':
-        trainer = Trainer(model=model, args=args, device=device)
-        
-        final_loss, final_acc = trainer.evaluate(test_dl)
-        print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
+    trainer = Trainer(model=model, args=args, device=device)
 
-    else:
-        pass
-
+    final_loss, final_acc = trainer.evaluate(test_dl)
+    print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
 
 
 if __name__ == '__main__':

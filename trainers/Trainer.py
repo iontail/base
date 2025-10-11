@@ -7,6 +7,7 @@ from torch.optim import SGD, Adam, AdamW
 import wandb
 
 from .scheduler import get_scheduler
+from .SL import SL
 
 class Trainer:
     def __init__(self,
@@ -35,9 +36,9 @@ class Trainer:
                                        milestones=self.milestones
                                        )
         
-        
-
         self.val_freq = args.val_freq
+
+        self._setup_learning_method()
 
 
         os.makedirs('./checkpoints', exist_ok=True)
@@ -46,8 +47,12 @@ class Trainer:
         self.data_name = args.data 
 
         
+    def _setup_learning_method(self):
+        if self.args.learning == 'sl':
+            self.method = SL(self.model, self.optimizer, self.use_grad_clip, self.grad_clip)
+        else:
+            pass
 
-        
     def train(self, train_dl, val_dl):
 
         self.use_wandb = self.args.use_wandb
@@ -71,7 +76,7 @@ class Trainer:
         for epoch in range(self.epochs):
             
             self.model.train()
-            loss, acc = self._forward_epoch(train_dl)
+            loss, acc = self.method(train_dl)
 
             train_metrics = {'loss': loss, 'acc': acc}
 
@@ -79,9 +84,8 @@ class Trainer:
                 
                 self.model.eval()
                 with torch.no_grad():
-                    val_loss, val_acc = self._forward_epoch(val_dl)
+                    val_loss, val_acc = self.method(val_dl)
                     val_metrics = {'loss': val_loss, 'acc': val_acc}
-
 
                 # save checkpoint
                 if val_acc > best + 1e-3:
@@ -124,46 +128,13 @@ class Trainer:
                 'learning_rate': current_lr,
                 'best': best
             }, step=epoch)
-
-
-
-    def _forward_epoch(self, loader: DataLoader):
-        
-        samples = 0
-        correct = 0
-        total_loss = 0
-        
-        for batch in tqdm(loader, leave=False):
-
-            data= batch['data'].to(self.device)
-            targets = batch['targets'].to(self.device)
-            samples += data.size(0)
-
-            outputs, loss = self.model(data, targets)
-            total_loss += loss.item() * data.size(0)
-
-            if self.model.training:
-                self.optimizer.zero_grad()
-                loss.backward()
-
-                if self.use_grad_clip:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip)
-        
-                self.optimizer.step()
-
-            preds = outputs.argmax(dim=1)
-            correct += (preds == targets).sum().item()
-
-        acc = correct / samples * 100
-        avg_loss = total_loss / samples
-        return (avg_loss, acc)
     
 
     def evaluate(self, loader: DataLoader):
 
         self.model.eval()
         with torch.no_grad():
-            loss, acc = self._forward_epoch(loader)
+            loss, acc = self.method(loader)
         return loss, acc
     
 

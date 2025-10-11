@@ -61,17 +61,11 @@ def main():
                       )
     
     model.to(device)
-
-    if args.learning == 'sl':
-        trainer = Trainer(model=model, args=args, device=device)
-    else:
-        pass
-
+    trainer = Trainer(model=model, args=args, device=device)
     trainer.train(train_dl, val_dl)
 
-    if args.learning == 'sl':
-        final_loss, final_acc = trainer.evaluate(val_dl)
-        print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
+    final_loss, final_acc = trainer.evaluate(val_dl)
+    print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")
 
 
 if __name__ == '__main__':
