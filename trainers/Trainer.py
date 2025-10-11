@@ -49,7 +49,7 @@ class Trainer:
         
     def _setup_learning_method(self):
         if self.args.learning == 'sl':
-            self.method = SL(self.model, self.optimizer, self.use_grad_clip, self.grad_clip)
+            self.method = SL(self.model, self.optimizer, self.device, self.use_grad_clip, self.grad_clip)
         else:
             pass
 

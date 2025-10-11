@@ -24,10 +24,7 @@ def get_dataloader(name: str = 'cifar10', root: str = './data', train: bool = Fa
         name=name,
         root=root,
         train=train,
-        default_augment=args.default_augment,
-        rand_augment=args.rand_augment,
-        color_jitter=args.color_jitter,
-        rand_erasing=args.rand_erasing
+        default_augment=args.default_augment
     )
 
     shuffle = True if train else False

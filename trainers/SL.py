@@ -1,21 +1,24 @@
 import torch
 import torch.nn as nn
-import tqdm
+from tqdm import tqdm
 
 class SL(nn.Module):
     def __init__(self,
                  model: nn.Module,
-                 optimizer: torch.optim,
+                 optimizer,
                  device: str,
                  use_grad_clip: bool,
                  grad_clip: float
                  ):
+
+        super().__init__()
         
         self.model = model
         self.optimizer = optimizer
         self.device = device
         self.use_grad_clip = use_grad_clip
         self.grad_clip = grad_clip
+        self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, loader):
         samples = 0
@@ -28,7 +31,8 @@ class SL(nn.Module):
             targets = batch['targets'].to(self.device)
             samples += data.size(0)
 
-            outputs, loss = self.model(data, targets)
+            outputs = self.model(data)
+            loss = self.criterion(outputs, targets)
             total_loss += loss.item() * data.size(0)
 
             if self.model.training:

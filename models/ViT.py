@@ -198,7 +198,8 @@ def get_vit(model_name: str,
         'vitbase32':  (768, 32, 12, 12),
         'vitlarge16':  (1024, 16, 24, 16),
         'vitlarge32':  (1024, 32, 24, 16),
-        'vithuge14':  (1280, 14, 32, 16)
+        'vithuge14':  (1280, 14, 32, 16),
+        'cifarvit': (768, 4, 12, 12)
     }
 
     # special case for DenseNet100 k=12 or k=24

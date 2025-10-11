@@ -5,10 +5,7 @@ from torchvision import transforms
 def get_dataset(name: str = 'cifar10',
                 root: str = './data',
                 train: bool = False,
-                default_augment: bool = False,
-                rand_augment: bool = False,
-                color_jitter: bool = False,
-                rand_erasing: bool = False
+                default_augment: bool = False
                 ):
     
     name = name.lower()
