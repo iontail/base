@@ -14,8 +14,6 @@ class Mixer(nn.Module):
         self.dropout = nn.Dropout(drop_p) if drop_p > 0 else nn.Identity()
 
         self.ln = nn.LayerNorm(hidden_channels)
-        #self.bn = nn.BatchNorm1d(seq_len)
-        #self.ln = nn.LayerNorm(seq_len)
         self.token_mixing = nn.Sequential(
             nn.Linear(seq_len, token_mixing_channels),
             nn.GELU(),
@@ -38,9 +36,7 @@ class Mixer(nn.Module):
 
         residual = x
         out = self.ln(x)
-        #out = self.bn(x)
         out = out.permute(0, 2, 1)
-        #out = self.ln(out)
         out = self.token_mixing(out)
         out = out.permute(0, 2, 1)
         out += residual
