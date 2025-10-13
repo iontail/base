@@ -102,8 +102,7 @@ class Encoder(nn.Module):
         
         super().__init__()
 
-        # 0.02 from Line 139 in https://github.com/pytorch/vision/blob/01b9faa16cfeacbb70aa33bd18534de50891786b/torchvision/models/vision_transformer.py
-        self.pos_embed = nn.Parameter(0.02* torch.randn(1, seq_len, in_channels))
+        self.pos_embed = nn.Parameter(torch.randn(1, seq_len, in_channels))
         self.layers = nn.ModuleList([ViTBlock(in_channels, num_heads, drop_p) for _ in range(num_blocks)])
         self.dropout = nn.Dropout(drop_p)
 
