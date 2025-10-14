@@ -60,7 +60,12 @@ def main():
                       )
     
     model.to(device)
-    trainer = Trainer(model=model, args=args, device=device)
+    
+    if args.learning == 'sl':
+        trainer = SL(model=model, args=args, device=device)
+    else:
+        pass
+    
     trainer.train(train_dl, val_dl)
 
     final_loss, final_acc = trainer.evaluate(val_dl)
