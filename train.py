@@ -4,8 +4,7 @@ import numpy as np
 
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
-from models.factory import get_model
-from trainers import Trainer
+from architecture import get_model, SL
 
 
 def _setup_reproducibility(seed: int = 42):
