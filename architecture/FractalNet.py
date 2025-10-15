@@ -79,23 +79,55 @@ class FractalBlock(nn.Module):
         self.num_layers_row = torch.tensor(num_layers_row, dtype=torch.int64)
  
 
-    def _make_mask(self, input_shape: list, g_drop_col: torch.Tensor):
-        pass
+    def _make_mask(self, input_shape: list, row: int, g_drop_col: torch.Tensor):
+        batch = input_shape[1] # batch
+        num_global = g_drop_col.shape[0]
+        num_local = self.C - num_global
+
+        # local drop column masking
+        p = torch.full_like([self.C, batch], fill_value=self.local_drop_p) # (column(=self.C), B)
+        mask = torch.bernoulli(p)
+
+        # global drop column masking
+        # g_drop_col can be [0, self.C]
+        mask[g_drop_col, :num_global] = 1.0
+
+        # make the columns zero in the row which have no layers
+        num_layer_row = self.num_layers_row[row]
+        non_active_col = self.C-num_layer_row
+        mask[:non_active_col, num_global:] = 0.0
+
+        # guarantee that at least one path exists in a join operation
+        active_sum = mask.sum(dim=0) # (B,)
+        make_active_idx = torch.where(active_sum == 0, 1.0, 0.0)
+        rand_chosen_col = torch.randint(low=non_active_col, high=self.C, size=[make_active_idx.shape])
+        mask[rand_chosen_col[non_active_col:]] = 1.0
+
+        return mask
+
+
+            
+
+
     
-    def _join(self, x: torch.Tensor, g_drop_col: torch.Tensor):
+    def _join(self, x: torch.Tensor, row: int, g_drop_col: torch.Tensor):
         """
-        x: (B, C, H, W)
-        g_drop_col: (# of global drop, )
+        x: (# of columns, B, C, H, W). # of columns is the number of columns which has a layer in the specific row.
+        g_drop_col: (# of global drop,)
         """
 
-        mask = self._make_mask(x.shape, g_drop_col) # (B, Column, C, H, W)
+        if self.trainig:
+            mask = self._make_mask(x.shape, row, g_drop_col) # (# of columns, B)
+        else:
+            pass
+
 
 
 
     def forward(self, x:  torch.Tensor, g_drop_col: torch.Tensor, col: int = None):
         """
         x: (B, C, H, W)
-        g_drop_col: (# of global drop, )
+        g_drop_col: (# of global drop,)
         col: which column to use in inference
         """
 
@@ -121,7 +153,7 @@ class FractalBlock(nn.Module):
                 layer = self.layers[i][j]
                 current.append(layer(outputs[j]))
 
-            row_out = self._join(current, g_drop_col)
+            row_out = self._join(current, row=i, g_drop_col=g_drop_col)
 
             for j in range(layer_start_idx_row, self.C):
                 outputs[j] = row_out
@@ -183,7 +215,7 @@ class FractalNet(nn.Module):
         g_drop_col = None
         if self.trainig:
             num_global = int(self.global_drop_ratio * x.shape[0])
-            g_drop_col = torch.randint(low=0, high=self.C, size=(num_global))
+            g_drop_col = torch.randint(low=0, high=self.C, size=(num_global)) # [0, self.C - 1]
      
         for i, block in enumerate(self.blocks):
             out = block(out, g_drop_col, col)
