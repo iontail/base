@@ -74,3 +74,49 @@ class FractalBlock(nn.Module):
 
         
 
+class FractalNet(nn.Module):
+    def __init__(self,
+                 num_classes: int,
+                 channel_list: list,
+                 B: int = 5,
+                 C: int = 4,
+                 local_drop_p: float = 0.15,
+                 global_drop_ratio: float = 0.5,
+                 drop_p: bool = False
+                 ):
+        
+        super().__init__()
+
+        if drop_p:
+            drop_p_list = [0.1 * i for i in range(B)] # [0.0, 0.1, 0.2, 0.3, 0.4]
+        else:
+            drop_p_list = [0.0] * B
+
+
+        current_channels = channel_list[0]
+        self.stem = ConvBlock(3, current_channels, drop_p = 0.0)
+
+        self.blocks = nn.ModuleList()
+
+        for i in range(B):
+            block = FractalBlock(
+                in_channels=current_channels,
+                out_channels=channel_list[i],
+                C=C,
+                local_drop_p=local_drop_p,
+                global_drop_ratio=global_drop_ratio,
+                drop_p=drop_p_list[i]
+            )
+
+            self.blocks.append(block)
+            current_channels = channel_list[i]
+
+        self.classifier = nn.Sequential(
+            None
+        )
+
+
+
+
+        
+
