@@ -37,17 +37,25 @@ class FractalBlock(nn.Module):
         # Sparse Module List
         self.layers = nn.ModuleList()
         self.max_depth = 2**(C-1)
+        self.C = C
+        self.local_drop_p = local_drop_p
+        self.global_drop_ratio = global_drop_ratio
+
+        length = []
+        num_layers_row = [0] * C # number of layers in each row
+
         for c in C:
             num_layers = 2**(c)
             layer_list = [None] * self.max_depth
             layer_stride = self.max_depth // num_layers
             fist_layer_idx = layer_stride - 1
-            
+            length.append(num_layers)
             for i in range(layer_stride - 1, num_layers, layer_stride):
                 if layer_list[fist_layer_idx] == None and self.downsample is None:
                     layer_list[i] = ConvBlock(in_channels, out_channels, drop_p)
                 else:
                     layer_list[i] = ConvBlock(out_channels, out_channels, drop_p)
+                num_layers_row[i] += 1
 
             self.layers.append(nn.ModuleList(layer_list))
 
@@ -59,18 +67,50 @@ class FractalBlock(nn.Module):
         None | L1   | L2
         None | None | L3
         L1   | L2   | L4
+
+        특징1: 특정 낮은(왼쪽) 열에서 None이 아닌 레이어가 있다면 해당 행에서 그보다 높은(오른쪽) 열에는 반드시 레이어가 존재한다
+        발견1: join operation은 특정 행에 존재하는 모든 오른쪽 레이어의 값에 적용하면 된다
         """
 
-    def global_drop(self, x: torch.Tensor):
-        # x: (B, C, H, W)
-        pass
+        self.length = torch.tensor(length, dtype=torch.int64)
+        self.num_layers_row = torch.tensor(num_layers_row, dtype=torch.int64)
+ 
 
-    def local_global_drop(self, x: torch.Tensor):
+    def _make_mask(self, x: torch.Tensor):
         pass
+    
+    def _join(self, x: torch.Tensor):
+
+    def forward(self, x:  torch.Tensor, column: torch.Tensor):
+        """
+        x: (B, C, H, W)
+        column: (# of global drop, column)
+        """
+
+        if self.downsample is not None:
+            x = self.downsample
+
+        outputs = [x] * self.C
+        for i in range(self.max_depth):
+            # based on 발견1
+            layer_start_idx_row = self.C - self.num_layers_row[i]
+            current = []
+            for j in range(layer_start_idx_row, self.C):
+                layer = self.layers[i][j]
+                current.append(layer(outputs[j]))
+
+            row_out = self._join(current)
+
+            for j in range(layer_start_idx_row, self.C):
+                outputs[j] = row_out
+
+        return outputs
+
+            
+
+        
 
 
-    def forward(self, x:  torch.Tensor, column: int = None, trainig: bool = False):
-        pass
 
         
 
