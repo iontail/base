@@ -50,11 +50,14 @@ class FractalBlock(nn.Module):
             layer_stride = self.max_depth // num_layers
             fist_layer_idx = layer_stride - 1
             length.append(num_layers)
+            
             for i in range(layer_stride - 1, num_layers, layer_stride):
                 if layer_list[fist_layer_idx] == None and self.downsample is None:
                     layer_list[i] = ConvBlock(in_channels, out_channels, drop_p)
+
                 else:
                     layer_list[i] = ConvBlock(out_channels, out_channels, drop_p)
+
                 num_layers_row[i] += 1
 
             self.layers.append(nn.ModuleList(layer_list))
@@ -76,15 +79,24 @@ class FractalBlock(nn.Module):
         self.num_layers_row = torch.tensor(num_layers_row, dtype=torch.int64)
  
 
-    def _make_mask(self, x: torch.Tensor):
+    def _make_mask(self, input_shape: list, g_drop_col: torch.Tensor):
         pass
     
-    def _join(self, x: torch.Tensor):
-
-    def forward(self, x:  torch.Tensor, column: torch.Tensor):
+    def _join(self, x: torch.Tensor, g_drop_col: torch.Tensor):
         """
         x: (B, C, H, W)
-        column: (# of global drop, column)
+        g_drop_col: (# of global drop, )
+        """
+
+        mask = self._make_mask(x.shape, g_drop_col) # (B, Column, C, H, W)
+
+
+
+    def forward(self, x:  torch.Tensor, g_drop_col: torch.Tensor, col: int = None):
+        """
+        x: (B, C, H, W)
+        g_drop_col: (# of global drop, )
+        col: which column to use in inference
         """
 
         if self.downsample is not None:
@@ -92,28 +104,32 @@ class FractalBlock(nn.Module):
 
         outputs = [x] * self.C
         for i in range(self.max_depth):
-            # based on 발견1
-            layer_start_idx_row = self.C - self.num_layers_row[i]
+
+            if self.trainig:
+                # based on 발견1
+                layer_start_idx_row = self.C - self.num_layers_row[i]
+                last_col = self.C
+            elif col is None:
+                layer_start_idx_row = self.C - 1
+                last_col = self.C
+            else: # inference for the specific column
+                layer_start_idx_row = col
+                last_col = col + 1
+            
             current = []
-            for j in range(layer_start_idx_row, self.C):
+            for j in range(layer_start_idx_row, last_col):
                 layer = self.layers[i][j]
                 current.append(layer(outputs[j]))
 
-            row_out = self._join(current)
+            row_out = self._join(current, g_drop_col)
 
             for j in range(layer_start_idx_row, self.C):
                 outputs[j] = row_out
 
-        return outputs
+        # output has same result in each index
+        return outputs[0]
 
             
-
-        
-
-
-
-        
-
 class FractalNet(nn.Module):
     def __init__(self,
                  num_classes: int,
@@ -127,17 +143,21 @@ class FractalNet(nn.Module):
         
         super().__init__()
 
+        self.B = B
+        self.C = C
+        self.local_drop_p = local_drop_p
+        self.global_drop_ratio = global_drop_ratio
+    
         if drop_p:
             drop_p_list = [0.1 * i for i in range(B)] # [0.0, 0.1, 0.2, 0.3, 0.4]
         else:
             drop_p_list = [0.0] * B
 
-
         current_channels = channel_list[0]
         self.stem = ConvBlock(3, current_channels, drop_p = 0.0)
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.blocks = nn.ModuleList()
-
         for i in range(B):
             block = FractalBlock(
                 in_channels=current_channels,
@@ -152,8 +172,27 @@ class FractalNet(nn.Module):
             current_channels = channel_list[i]
 
         self.classifier = nn.Sequential(
-            None
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(current_channels, num_classes)
         )
+
+    def forward(self, x: torch.Tensor, col: int = None):
+        out = self.stem(x)
+
+        g_drop_col = None
+        if self.trainig:
+            num_global = int(self.global_drop_ratio * x.shape[0])
+            g_drop_col = torch.randint(low=0, high=self.C, size=(num_global))
+     
+        for i, block in enumerate(self.blocks):
+            out = block(out, g_drop_col, col)
+
+            if i != (self.B - 1):
+                out = self.maxpool(out)
+
+        out = self.classifier(out)
+
 
 
 
