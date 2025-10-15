@@ -99,7 +99,12 @@ class FractalBlock(nn.Module):
         # some columns values may not be in num_active_col
         global_mask = torch.zeros(num_active, num_global)
         g_col = g_drop_col - (self.C - num_active) # make index of first active columns 0
-        global_mask[g_col >= 0] = 1.0
+        valid = g_col >= 0 # samples that have valid column within global sample
+        valid_mask = valid.nonzero(as_tuple=True)[0]
+        valid_global_col = g_col[valid]
+
+        if valid_mask.numel() > 0:
+            global_mask[valid_global_col, valid_mask] = 1.0
 
         mask = torch.hstack((global_mask, local_mask)) # (active_column, B)
         return mask
@@ -115,11 +120,11 @@ class FractalBlock(nn.Module):
             mask = mask.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1) # (active_column, B, 1, 1, 1)
             masked_sum = (x * mask).sum(dim=0) # (B,)
             num_active = mask.sum(dim=0) # (B,)
-            joined = masked_sum / num_active.reshape(-1, 1, 1, 1) # (B, C, H, W)
+            joined = masked_sum / (num_active.reshape(-1, 1, 1, 1) + 1e-6) # (B, C, H, W)
 
         else:
             num_active_col = self.num_layers_row[row]
-            joined = x.sum(dim=0) / num_active_col
+            joined = x.sum(dim=0) / (num_active_col + 1e-6)
         
         return joined
 
@@ -150,13 +155,15 @@ class FractalBlock(nn.Module):
             current = []
             for j in range(layer_start_idx_row, last_col):
                 layer = self.layers[j][i]
-                current.append(layer(outputs[j]))
+                if layer is not None:
+                    current.append(layer(outputs[j]))
 
-            stacked_current = torch.stack(current, dim=0) # (# of columns, B, C, H, W)
-            row_out = self._join(stacked_current, row=i, g_drop_col=g_drop_col)
+            if current:
+                stacked_current = torch.stack(current, dim=0) # (# of columns, B, C, H, W)
+                row_out = self._join(stacked_current, row=i, g_drop_col=g_drop_col)
 
-            for j in range(layer_start_idx_row, self.C):
-                outputs[j] = row_out
+                for j in range(layer_start_idx_row, self.C):
+                    outputs[j] = row_out
 
         # output has same result in each index
         return outputs[0]
@@ -215,7 +222,7 @@ class FractalNet(nn.Module):
         g_drop_col = None
         if self.training:
             num_global = int(self.global_drop_ratio * x.shape[0])
-            g_drop_col = torch.randint(low=0, high=self.C, size=(num_global)) # [0, self.C - 1]
+            g_drop_col = torch.randint(low=0, high=self.C, size=(num_global,)) # [0, self.C - 1]
      
         for i, block in enumerate(self.blocks):
             out = block(out, g_drop_col, col)
@@ -233,7 +240,7 @@ def get_fractalnet(model_name: str,
                    ):
 
     model_config_dict = {
-        'fractalnet': ([128, 256, 512, 1024], 5, 4),
+        'fractalnet': ([128, 256, 512, 1024], 4, 4),
         'cifarfractalnet':  ([64, 128, 256, 512, 512], 5, 4)
         }
 
@@ -265,7 +272,7 @@ if __name__ == '__main__':
 
 
     device = 'cpu'
-    model = get_fractalnet('cifarfractalnet', 10).to(device) # for comparison with # of params in table 6
+    model = get_fractalnet('fractalnet', 1000).to(device) # for comparison with # of params in table 6
 
     model_summary(model)
 
@@ -273,14 +280,14 @@ if __name__ == '__main__':
     with torch.no_grad():
         model.eval()
 
-        data = torch.randn(2, 3, 32, 32).to(device)
+        data = torch.randn(2, 3, 224, 224).to(device)
         output = model(data)
         pred = output.argmax(dim=-1)
 
         print(f"Output shape: {output.shape}")
         print(f"Predictions: {pred}")
 
-        output = model(data, col=3)
+        output = model(data, col=2)
         pred = output.argmax(dim=-1)
 
         print(f"Output shape: {output.shape}")
