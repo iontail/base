@@ -47,10 +47,10 @@ class FractalBlock(nn.Module):
             num_layers = 2**(c)
             layer_list = [None] * self.max_depth
             layer_stride = self.max_depth // num_layers
-            fist_layer_idx = layer_stride - 1
+            first_layer_idx = layer_stride - 1
             
             for i in range(layer_stride - 1, self.max_depth, layer_stride):
-                if layer_list[fist_layer_idx] == None and self.downsample is None:
+                if layer_list[first_layer_idx] == None and self.downsample is None:
                     layer_list[i] = ConvBlock(in_channels, out_channels, drop_p)
 
                 else:
@@ -76,49 +76,50 @@ class FractalBlock(nn.Module):
         self.num_layers_row = num_layers_row
  
 
-    def _make_mask(self, input_shape: list, row: int, g_drop_col: torch.Tensor):
-        B = input_shape[1] # batch
+    def _make_mask(self, row: int, batch: int, g_drop_col: torch.Tensor):
         num_global = g_drop_col.shape[0]
-        num_local = self.C - num_global
+        num_local = batch - num_global
+
+        num_active = self.num_layers_row[row]
 
         # local drop column masking
-        p = torch.full_like([self.C, B], fill_value=self.local_drop_p) # (column(=self.C), B)
-        mask = torch.bernoulli(p)
+        p = torch.full((num_active, num_local), fill_value=(1 - self.local_drop_p)) # (active_column, local)
+        local_mask = torch.bernoulli(p)
+
+        # guarantee that at least one path exists in a join operation
+        local_sum = local_mask.sum(dim=0)
+        local_dead = (local_sum == 0) # (local, )
+        if local_dead.any():
+            local_dead_idx = local_dead.nonzero(as_tuple=True)[0]
+            rand_chosen_col = torch.randint(low=0, high=num_active, size=(local_dead_idx.shape))
+            local_mask[rand_chosen_col, local_dead_idx] = 1.0
 
         # global drop column masking
         # g_drop_col can be [0, self.C]
-        mask[g_drop_col, :num_global] = 1.0
+        # some columns values may not be in num_active_col
+        global_mask = torch.zeros(num_active, num_global)
+        g_col = g_drop_col - (self.C - num_active) # make index of first active columns 0
+        global_mask[g_col >= 0] = 1.0
 
-        # make the columns zero in the row which have no layers
-        num_layer_row = self.num_layers_row[row]
-        non_active_col = self.C - num_layer_row
-        mask[:non_active_col, num_global:] = 0.0
-
-        # guarantee that at least one path exists in a join operation
-        active_sum = mask.sum(dim=0) # (B,)
-        if active_sum[num_global:].any():
-            make_active_idx = torch.where(active_sum == 0, 1.0, 0.0)
-            rand_chosen_col = torch.randint(low=non_active_col, high=self.C, size=[make_active_idx.shape])
-            mask[rand_chosen_col[non_active_col:]] = 1.0
-
+        mask = torch.hstack((global_mask, local_mask)) # (active_column, B)
         return mask
     
     def _join(self, x: torch.Tensor, row: int, g_drop_col: torch.Tensor):
         """
-        x: (# of columns, B, C, H, W). # of columns is the number of columns which has a layer in the specific row.
+        x: (active_column, B, C, H, W). active_column is the number of columns which has a layer in the specific row.
         g_drop_col: (# of global drop,)
         """
 
         if self.training:
-            mask = self._make_mask(x.shape, row, g_drop_col) # (# of columns, B)
-            mask = mask.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1) # (# of columns, B, 1, 1, 1)
-            masked_sum = x[mask].sum(dim=0) # (B,)
+            mask = self._make_mask(row, x.shape[1], g_drop_col) # (active_column, B)
+            mask = mask.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1) # (active_column, B, 1, 1, 1)
+            masked_sum = (x * mask).sum(dim=0) # (B,)
             num_active = mask.sum(dim=0) # (B,)
-            joined = masked_sum / num_active
+            joined = masked_sum / num_active.reshape(-1, 1, 1, 1) # (B, C, H, W)
 
         else:
-            num_layer_row = self.num_layers_row[row]
-            joined = x.sum(dim=0) / num_layer_row
+            num_active_col = self.num_layers_row[row]
+            joined = x.sum(dim=0) / num_active_col
         
         return joined
 
@@ -148,7 +149,7 @@ class FractalBlock(nn.Module):
             
             current = []
             for j in range(layer_start_idx_row, last_col):
-                layer = self.layers[i][j]
+                layer = self.layers[j][i]
                 current.append(layer(outputs[j]))
 
             stacked_current = torch.stack(current, dim=0) # (# of columns, B, C, H, W)
@@ -223,6 +224,7 @@ class FractalNet(nn.Module):
                 out = self.maxpool(out)
 
         out = self.classifier(out)
+        return out
 
 
 
@@ -237,7 +239,7 @@ def get_fractalnet(model_name: str,
 
     # special case for DenseNet100 k=12 or k=24
     if model_name not in model_config_dict.keys():
-        raise ValueError(f"Given model name does not exit in ViT model config. Got {model_name}")
+        raise ValueError(f"Given model name does not exit in FractalNet model config. Got {model_name}")
 
     model_config = model_config_dict[model_name]
     return FractalNet(
@@ -263,7 +265,7 @@ if __name__ == '__main__':
 
 
     device = 'cpu'
-    model = get_fractalnet('cifarfractal', 10).to(device) # for comparison with # of params in table 6
+    model = get_fractalnet('cifarfractalnet', 10).to(device) # for comparison with # of params in table 6
 
     model_summary(model)
 
