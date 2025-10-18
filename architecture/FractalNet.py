@@ -255,8 +255,7 @@ def get_fractalnet(model_name: str,
         'fractalnet': ([128, 256, 512, 1024], 4, 4),
         'cifarfractalnet':  ([64, 128, 256, 512, 512], 5, 4)
         }
-
-    # special case for DenseNet100 k=12 or k=24
+    
     if model_name not in model_config_dict.keys():
         raise ValueError(f"Given model name does not exit in FractalNet model config. Got {model_name}")
 
