@@ -100,10 +100,10 @@ class FractalBlock(nn.Module):
         global_mask = torch.zeros(num_active, num_global)
         g_col = g_drop_col - (self.C - num_active) # make index of first active columns 0
         valid = g_col >= 0 # samples that have valid column within global sample
-        valid_mask = valid.nonzero(as_tuple=True)[0]
-        valid_global_col = g_col[valid]
-
-        if valid_mask.numel() > 0:
+        
+        if valid.any():
+            valid_mask = valid.nonzero(as_tuple=True)[0]
+            valid_global_col = g_col[valid]
             global_mask[valid_global_col, valid_mask] = 1.0
 
         mask = torch.hstack((global_mask, local_mask)) # (active_column, B)
