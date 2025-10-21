@@ -116,7 +116,7 @@ class FractalBlock(nn.Module):
         """
 
         if self.training:
-            mask = self._make_mask(row, x.shape[1], g_drop_col) # (active_column, B)
+            mask = self._make_mask(row, x.shape[1], g_drop_col).to(x.device) # (active_column, B)
             mask = mask.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1) # (active_column, B, 1, 1, 1)
             masked_sum = (x * mask).sum(dim=0) # (B,)
             num_active = mask.sum(dim=0) # (B,)
@@ -141,12 +141,9 @@ class FractalBlock(nn.Module):
         outputs = [x] * self.C
         for i in range(self.max_depth):
 
-            if self.training:
+            if (self.training) or (col is None):
                 # based on 발견1
                 layer_start_idx_row = self.C - self.num_layers_row[i]
-                last_col = self.C
-            elif col is None:
-                layer_start_idx_row = self.C - 1
                 last_col = self.C
             else: # inference for the specific column
                 layer_start_idx_row = col
