@@ -31,7 +31,7 @@ class FractalBlock(nn.Module):
         super().__init__()
 
         self.downsample = None
-        if in_channels < out_channels:
+        if in_channels != out_channels:
             self.downsample = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias = False)
 
         # Sparse Module List
@@ -41,7 +41,7 @@ class FractalBlock(nn.Module):
         self.local_drop_p = local_drop_p
         self.global_drop_ratio = global_drop_ratio
 
-        num_layers_row = [0] * self.max_depth # number of layers in each row
+        self.num_layers_row = [0] * self.max_depth # number of layers in each row
 
         for c in range(C):
             num_layers = 2**(c)
@@ -49,14 +49,9 @@ class FractalBlock(nn.Module):
             layer_stride = self.max_depth // num_layers
             first_layer_idx = layer_stride - 1
             
-            for i in range(layer_stride - 1, self.max_depth, layer_stride):
-                if layer_list[first_layer_idx] == None and self.downsample is None:
-                    layer_list[i] = ConvBlock(in_channels, out_channels, drop_p)
-
-                else:
-                    layer_list[i] = ConvBlock(out_channels, out_channels, drop_p)
-
-                num_layers_row[i] += 1
+            for i in range(first_layer_idx, self.max_depth, layer_stride):
+                layer_list[i] = ConvBlock(out_channels, out_channels, drop_p)
+                self.num_layers_row[i] += 1
 
             self.layers.append(nn.ModuleList(layer_list))
 
@@ -72,8 +67,6 @@ class FractalBlock(nn.Module):
         특징1: 특정 낮은(왼쪽) 열에서 None이 아닌 레이어가 있다면 해당 행에서 그보다 높은(오른쪽) 열에는 반드시 레이어가 존재한다
         발견1: join operation은 특정 행에 존재하는 모든 오른쪽 레이어의 값에 적용하면 된다
         """
-
-        self.num_layers_row = num_layers_row
  
 
     def _make_mask(self, row: int, batch: int, g_drop_col: torch.Tensor):
@@ -111,14 +104,14 @@ class FractalBlock(nn.Module):
     
     def _join(self, x: torch.Tensor, row: int, g_drop_col: torch.Tensor):
         """
-        x: (active_column, B, C, H, W). active_column is the number of columns which has a layer in the specific row.
+        x: (active_column, B, C, H, W). "active_column" is the number of columns which has a layer in the specific row.
         g_drop_col: (# of global drop,)
         """
 
         if self.training:
             mask = self._make_mask(row, x.shape[1], g_drop_col).to(x.device) # (active_column, B)
             mask = mask.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1) # (active_column, B, 1, 1, 1)
-            masked_sum = (x * mask).sum(dim=0) # (B,)
+            masked_sum = (x * mask).sum(dim=0) # (B, C, H, W)
             num_active = mask.sum(dim=0) # (B,)
             joined = masked_sum / (num_active.reshape(-1, 1, 1, 1) + 1e-6) # (B, C, H, W)
 
