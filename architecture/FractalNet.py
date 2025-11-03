@@ -184,7 +184,8 @@ class FractalNet(nn.Module):
 
         current_channels = channel_list[0]
         self.stem = ConvBlock(3, current_channels, drop_p = 0.0)
-        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.pool_layers = nn.ModuleList([nn.MaxPool2d(kernel_size=2, stride=2) for _ in range(self.B-1)])
+        self.pool_layers.append(nn.AdaptiveAvgPool2d(1))
 
         self.blocks = nn.ModuleList()
         for i in range(B):
@@ -229,8 +230,7 @@ class FractalNet(nn.Module):
         for i, block in enumerate(self.blocks):
             out = block(out, g_drop_col, col)
 
-            if i != (self.B - 1):
-                out = self.maxpool(out)
+            out = self.pool_layers[i](out)
 
         out = self.classifier(out)
         return out
