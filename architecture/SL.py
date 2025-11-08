@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from .trainers import Trainer
+from .trainer import Trainer
 
 class SL(Trainer):
     def __init__(self,
