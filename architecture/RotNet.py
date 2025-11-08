@@ -16,7 +16,6 @@ class RotNet(Trainer):
         self.criterion = nn.CrossEntropyLoss()
 
     def _compute_loss_correct(self, data: torch.Tensor, targets: torch.Tensor, **kwargs):
-        # TODO: rotate the input images and adjust the targets accordingly
         outputs, penultimate_features = self.model(data, penultimate=True)
         loss = self.criterion(outputs, targets)
         return loss, penultimate_features
@@ -34,7 +33,13 @@ class RotNet(Trainer):
             targets = batch['targets'].to(self.device)
             samples += data.size(0)
 
-            loss, penultimate_output = self._compute_loss_correct(data, targets)
+            # rotate the images and make new targets(rotation)
+            rand = torch.randint(0, 4, (data.size(0),), device=data.device)
+            rotated_data = torch.zeros_like(data)
+            for i in range(len(rand)):
+                rotated_data[i] = torch.rot90(data[i], k=rand[i], dims=[1,2])
+
+            loss, penultimate_output = self._compute_loss_correct(rotated_data, targets=rand)
             total_loss = loss.item() * data.size(0)
             penultimate_features = torch.cat((penultimate_features, penultimate_output), dim=0)
             targets_list = torch.cat((targets_list, targets), dim=0)
