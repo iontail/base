@@ -134,13 +134,14 @@ class DenseNet(nn.Module):
                 # output channels is compressed by factor
                 in_channels = out_channels
 
-        self.classifier = nn.Sequential(
+        self.head= nn.Sequential(
             nn.BatchNorm2d(in_channels),
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Linear(in_channels, num_classes)
+            nn.Flatten()
         )
+
+        self.classifier = nn.Linear(in_channels, num_classes)
 
         self.apply(self._init_weights)
 
@@ -160,7 +161,11 @@ class DenseNet(nn.Module):
             nn.init.normal_(module.weight, 0, 0.01)
             nn.init.zeros_(module.bias)
 
-    def forward(self, x: torch.Tensor):
+    @property
+    def feature_dim(self):
+        return self.classifier.in_features
+    
+    def forward(self, x: torch.Tensor, penultimate: bool = False):
         x = self.conv(x)
 
         for i in range(self.len_block_list):
@@ -169,8 +174,13 @@ class DenseNet(nn.Module):
             if i != self.len_block_list - 1:
                 x = getattr(self, f'transition{i+1}')(x)
         
+        x = self.head(x)
         out = self.classifier(x)
-        return out
+
+        if penultimate:
+            return out, x
+        else:
+            return out
 
 
 """

@@ -42,10 +42,15 @@ class Trainer(ABC):
         os.makedirs('./checkpoints', exist_ok=True)
         prefix = f"{self.args.model.lower()}_best.pth"
         self.save_path = os.path.join('./checkpoints', prefix)
-        self.data_name = args.data 
+        self.data_name = args.data
+
+        if args.learning != 'sl':
+            self.penultimate = True
+        else:
+            self.penultimate = False
 
     def train(self, train_dl, val_dl):
-
+        
         self.use_wandb = self.args.use_wandb
         if self.use_wandb:
             wandb.init(
@@ -122,17 +127,18 @@ class Trainer(ABC):
 
     def _forward_epoch(self, loader):
         samples = 0
-        correct = 0
         total_loss = 0
-        
-        for batch in tqdm(loader, leave=False):
+        total_correct = 0
+
+        for i, batch in enumerate(tqdm(loader, leave=False)):
 
             data= batch['data'].to(self.device)
             targets = batch['targets'].to(self.device)
             samples += data.size(0)
 
-            outputs, loss = self._get_loss(data, targets)
-            total_loss += loss.item() * data.size(0)
+            loss, correct = self._compute_loss_correct(data, targets, targets_list=self.targets_list, batch_idx=i)
+            total_loss = loss.item() * data.size(0)
+            total_correct += correct
 
             if self.model.training:
                 self.optimizer.zero_grad()
@@ -143,16 +149,14 @@ class Trainer(ABC):
         
                 self.optimizer.step()
 
-            preds = outputs.argmax(dim=1)
-            correct += (preds == targets).sum().item()
 
-        acc = correct / samples * 100
+        acc = total_correct / samples * 100
         avg_loss = total_loss / samples
         return (avg_loss, acc)
     
 
     @abstractmethod
-    def _get_loss(self, data: torch.Tensor, targets: torch.Tensor):
+    def _compute_loss_acc(self, data: torch.Tensor, targets: torch.Tensor, **kwargs):
         """
         Return: (outputs, loss)
         """
@@ -160,6 +164,10 @@ class Trainer(ABC):
     
 
     def evaluate(self, loader: DataLoader):
+
+        for batch in loader:
+            targets = batch['targets'].to(self.device)
+            self.targets_list = torch.cat((self.targets_list, targets), dim=0)
 
         self.model.eval()
         with torch.no_grad():

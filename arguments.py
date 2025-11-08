@@ -20,7 +20,7 @@ def parse_arguments():
     parser.add_argument('--default_augment', action='store_true')
 
     # training
-    parser.add_argument('--learning', type=str, default='sl')
+    parser.add_argument('--learning', type=str, default='sl', choices=['sl', 'rotnet'])
     parser.add_argument('--epochs', type=int, default=164)
     parser.add_argument('--optimizer', type=str, default='sgd')
     parser.add_argument('--scheduler', type=str, default='step')

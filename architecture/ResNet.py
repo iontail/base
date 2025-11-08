@@ -133,11 +133,11 @@ class ResNet(nn.Module):
             self.conv4 = ResNetBlock(block, 32 * expansion, 64,
                                      block_list[2], stride=2, expansion=expansion)
             self.conv5 = None
-            self.classifier = nn.Sequential(
+            self.head = nn.Sequential(
                 nn.AdaptiveAvgPool2d((1, 1)),
-                nn.Flatten(),
-                nn.Linear(64 * expansion, num_classes)
+                nn.Flatten()
             )
+            self.classifier = nn.Linear(64 * expansion, num_classes)
 
         else:
             self.conv1 = nn.Sequential(
@@ -155,11 +155,11 @@ class ResNet(nn.Module):
                                      block_list[2], stride=2, expansion=expansion)
             self.conv5 = ResNetBlock(block, 256 * expansion, 512,
                                      block_list[3], stride=2, expansion=expansion)
-            self.classifier = nn.Sequential(
+            self.head = nn.Sequential(
                 nn.AdaptiveAvgPool2d((1, 1)),
-                nn.Flatten(),
-                nn.Linear(512 * expansion, num_classes)
+                nn.Flatten()
             )
+            self.classifier = nn.Linear(512 * expansion, num_classes)
 
         # nn.Module.apply() recursively applies the given function to every submodule
         # https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html
@@ -181,8 +181,12 @@ class ResNet(nn.Module):
             nn.init.normal_(module.weight, 0, 0.01)
             nn.init.zeros_(module.bias)
 
+    @property
+    def feature_dim(self):
+        return self.classifier.in_features
 
-    def forward(self, x):
+
+    def forward(self, x: torch.Tensor, penultimate: bool = False):
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
@@ -191,8 +195,13 @@ class ResNet(nn.Module):
         if self.conv5 is not None:
             x = self.conv5(x)
 
+        x = self.head(x)
         out = self.classifier(x)
-        return out
+
+        if penultimate:
+            return out, x
+        else:
+            return out
     
 
 def get_resnet(model_name: str, num_classes: int, is_data_small: bool):

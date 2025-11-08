@@ -14,7 +14,10 @@ class SL(Trainer):
         self.model = model
         self.criterion = nn.CrossEntropyLoss()
 
-    def _get_loss(self, data: torch.Tensor, targets: torch.Tensor):
-        outputs = self.model(data)
+    def _compute_loss_correct(self, data: torch.Tensor, targets: torch.Tensor, **kwargs):
+        outputs = self.model(data, penultimate=False)
         loss = self.criterion(outputs, targets)
-        return outputs, loss
+
+        preds = outputs.argmax(dim=1)
+        correct = (preds == targets).sum().item()
+        return loss, correct

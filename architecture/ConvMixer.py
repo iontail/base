@@ -62,7 +62,11 @@ class ConvMixer(nn.Module):
 
         self.classifier = nn.Linear(in_channels, num_classes)
 
-    def forward(self, x: torch.Tensor):
+    @property
+    def feature_dim(self):
+        return self.classifier.in_features
+    
+    def forward(self, x: torch.Tensor, penultimate: bool = False):
         # x: (B, C, H, W)
         x = self.embedding(x)
         x = self.gelu(x)
@@ -71,9 +75,13 @@ class ConvMixer(nn.Module):
         x = self.encoder(x) 
 
         x = x.flatten(2).mean(-1)  # (B, C)
-        x = self.classifier(x)
-        return x
-    
+        out = self.classifier(x)
+
+        if penultimate:
+            return out, x
+        else:
+            return out
+
 
 
 def get_convmixer(model_name: str, num_classes: int, img_size: int):

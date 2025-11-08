@@ -201,11 +201,12 @@ class FractalNet(nn.Module):
             self.blocks.append(block)
             current_channels = channel_list[i]
 
-        self.classifier = nn.Sequential(
+        self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Linear(current_channels, num_classes)
+            nn.Flatten()
         )
+
+        self.classifier = nn.Linear(current_channels, num_classes)
 
         self.apply(self._init_weights)
 
@@ -219,8 +220,13 @@ class FractalNet(nn.Module):
             nn.init.normal_(module.weight, 0, 0.01)
             nn.init.zeros_(module.bias)
 
-    def forward(self, x: torch.Tensor, col: int = None):
-        out = self.stem(x)
+
+    @property
+    def feature_dim(self):
+        return self.classifier.in_features
+    
+    def forward(self, x: torch.Tensor, col: int = None, penultimate: bool = False):
+        x = self.stem(x)
 
         g_drop_col = None
         if self.training:
@@ -228,12 +234,16 @@ class FractalNet(nn.Module):
             g_drop_col = torch.randint(low=0, high=self.C, size=(num_global,)) # [0, self.C - 1]
      
         for i, block in enumerate(self.blocks):
-            out = block(out, g_drop_col, col)
+            x = block(x, g_drop_col, col)
 
-            out = self.pool_layers[i](out)
+            x = self.pool_layers[i](x)
 
-        out = self.classifier(out)
-        return out
+        x = self.head(x)
+        out = self.classifier(x)
+        if penultimate:
+            return out, x
+        else:
+            return out
 
 
 

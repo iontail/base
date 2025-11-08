@@ -4,7 +4,7 @@ import numpy as np
 
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
-from architecture import get_model, SL
+from architecture import get_model, SL, RotNet
 
 
 def _setup_reproducibility(seed: int = 42):
@@ -63,6 +63,8 @@ def main():
     
     if args.learning == 'sl':
         trainer = SL(model=model, args=args, device=device)
+    elif args.learning == 'rotnet':
+        trainer = RotNet(model=model, args=args, device=device)
     else:
         pass
     

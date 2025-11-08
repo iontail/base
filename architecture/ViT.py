@@ -169,7 +169,11 @@ class ViT(nn.Module):
             nn.init.zeros_(self.heads.head.weight)
             nn.init.zeros_(self.heads.head.bias)
 
-    def forward(self, x: torch.Tensor):
+    @property
+    def feature_dim(self):
+        return self.heads['head'].in_features
+
+    def forward(self, x: torch.Tensor, penultimate: bool = False):
         # x: (B, C, H, W)
 
         patch = self.patch_embed(x) # (B, C, H//P, W//P)
@@ -182,8 +186,11 @@ class ViT(nn.Module):
         cls = out[:, 0, :]
         cls = self.ln(cls)
         preds = self.heads(cls)
-        return preds
-    
+
+        if penultimate:
+            return preds, cls
+        else:
+            return preds
 
 
 def get_vit(model_name: str,

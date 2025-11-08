@@ -69,16 +69,25 @@ class MLPMixer(nn.Module):
         self.ln = nn.LayerNorm(hidden_channels)
         self.classifier = nn.Linear(hidden_channels, num_classes)
 
-    def forward(self, x: torch.Tensor):
+    
+    @property
+    def feature_dim(self):
+        return self.classifier.in_features
+    
+    def forward(self, x: torch.Tensor, penultimate: bool = False):
         # x: (B, C, H, W)
         patch = self.patch_embed(x)
         patch = patch.flatten(2).transpose(2, 1) # (B, L, C)
 
-        out = self.encoder(patch)
-        out = self.ln(out)
-        out = out.mean(dim=1) # gap
-        out = self.classifier(out)
-        return out
+        x = self.encoder(patch)
+        x = self.ln(x)
+        x = x.mean(dim=1) # gap
+        out = self.classifier(x)
+        
+        if penultimate:
+            return out, x
+        else:
+            return out
 
     
 
