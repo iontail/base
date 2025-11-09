@@ -40,7 +40,7 @@ class RotNet(Trainer):
                 rotated_data[i] = torch.rot90(data[i], k=rand[i], dims=[1,2])
 
             loss, penultimate_output = self._compute_loss_correct(rotated_data, targets=rand)
-            total_loss = loss.item() * data.size(0)
+            total_loss += loss.item() * data.size(0)
             penultimate_features = torch.cat((penultimate_features, penultimate_output), dim=0)
             targets_list = torch.cat((targets_list, targets), dim=0)
 

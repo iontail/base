@@ -60,6 +60,10 @@ class ConvMixer(nn.Module):
 
         self.encoder = Encoder(in_channels, kernel_size, num_blocks)
 
+        self.head = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1,1)),
+            nn.Flatten()
+        )
         self.classifier = nn.Linear(in_channels, num_classes)
 
     @property
@@ -74,7 +78,7 @@ class ConvMixer(nn.Module):
 
         x = self.encoder(x) 
 
-        x = x.flatten(2).mean(-1)  # (B, C)
+        x = self.head(x)  # (B, C)
         out = self.classifier(x)
 
         if penultimate:
