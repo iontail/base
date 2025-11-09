@@ -11,8 +11,7 @@ from abc import ABC, abstractmethod
 from .scheduler import get_scheduler
 
 
-lr_schedule = lambda t: np.interp([t], [0, args.epochs*2//5, args.epochs*4//5, args.epochs], 
-                                  [0, args.lr_max, args.lr_max/20.0, 0])[0]
+
 class Trainer(ABC):
     def __init__(self,
                  model: nn.Module,

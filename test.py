@@ -4,8 +4,10 @@ import numpy as np
 
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
-from models.factory import get_model
-from architecture import SL
+from architecture.factory import get_model
+from architecture import SL, RotNet
+
+
 
 def _setup_reproducibility(seed: int = 42):
     random.seed(seed)
