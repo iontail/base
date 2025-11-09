@@ -136,7 +136,7 @@ class Trainer(ABC):
             targets = batch['targets'].to(self.device)
             samples += data.size(0)
 
-            loss, correct = self._compute_loss_correct(data, targets, targets_list=self.targets_list, batch_idx=i)
+            loss, correct = self._compute_loss_correct(data, targets)
             total_loss = loss.item() * data.size(0)
             total_correct += correct
 
@@ -156,7 +156,7 @@ class Trainer(ABC):
     
 
     @abstractmethod
-    def _compute_loss_acc(self, data: torch.Tensor, targets: torch.Tensor, **kwargs):
+    def _compute_loss_correct(self, data: torch.Tensor, targets: torch.Tensor, **kwargs):
         """
         Return: (outputs, loss)
         """
