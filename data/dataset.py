@@ -5,7 +5,8 @@ from torchvision import transforms
 def get_dataset(name: str = 'cifar10',
                 root: str = './data',
                 train: bool = False,
-                default_augment: bool = False
+                default_augment: bool = False,
+                hard_augment: bool = False
                 ):
     
     name = name.lower()
@@ -24,6 +25,12 @@ def get_dataset(name: str = 'cifar10',
         transform_list.append(transforms.Pad(4))
         transform_list.append(transforms.RandomCrop(32))
         transform_list.append(transforms.RandomHorizontalFlip(0.5))
+
+    elif hard_augment and train:
+        transform_list.append(transforms.RandomCrop(32, padding=4))
+        transform_list.append(transforms.RandomHorizontalFlip(0.5))
+        transform_list.append(transforms.RandAugment(magnitude=12))
+        transform_list.append(transforms.ColorJitter())
 
     """
     if rand_augment and train:

@@ -10,6 +10,9 @@ from abc import ABC, abstractmethod
 
 from .scheduler import get_scheduler
 
+
+lr_schedule = lambda t: np.interp([t], [0, args.epochs*2//5, args.epochs*4//5, args.epochs], 
+                                  [0, args.lr_max, args.lr_max/20.0, 0])[0]
 class Trainer(ABC):
     def __init__(self,
                  model: nn.Module,
@@ -137,7 +140,7 @@ class Trainer(ABC):
             samples += data.size(0)
 
             loss, correct = self._compute_loss_correct(data, targets)
-            total_loss = loss.item() * data.size(0)
+            total_loss += loss.item() * data.size(0)
             total_correct += correct
 
             if self.model.training:
@@ -164,11 +167,6 @@ class Trainer(ABC):
     
 
     def evaluate(self, loader: DataLoader):
-
-        for batch in loader:
-            targets = batch['targets'].to(self.device)
-            self.targets_list = torch.cat((self.targets_list, targets), dim=0)
-
         self.model.eval()
         with torch.no_grad():
             loss, acc = self._forward_epoch(loader)

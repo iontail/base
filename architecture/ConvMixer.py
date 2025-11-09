@@ -8,13 +8,13 @@ class Mixer(nn.Module):
         self.in_channels = in_channels
 
         self.spatial_mixing = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding='same', groups=in_channels), # depthwise conv
+            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding='same', groups=in_channels, bias=False), # depthwise conv
             nn.GELU(),
             nn.BatchNorm2d(in_channels)
         )
 
         self.channel_mixing = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, kernel_size=1),
+            nn.Conv2d(in_channels, in_channels, kernel_size=1, bias=False),
             nn.GELU(),
             nn.BatchNorm2d(in_channels)
         )
@@ -49,7 +49,6 @@ class ConvMixer(nn.Module):
         self.kernel_size = kernel_size
         self.num_blocks = num_blocks
         self.patch_size = patch_size
-        self.kernel_size = kernel_size
 
         # create patch embeddings
         # (B, C, H, W) -> (B, hidden_dim, H//p, W//p)

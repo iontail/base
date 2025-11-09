@@ -61,8 +61,11 @@ def test():
 
     model.to(device)
     model.load_state_dict(checkpoint)
+    
     if args.learning == 'sl':
         trainer = SL(model=model, args=args, device=device)
+    elif args.learning == 'rotnet':
+        trainer = RotNet(model=model, args=args, device=device)
     else:
         pass
 
