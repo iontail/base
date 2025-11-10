@@ -91,7 +91,8 @@ def get_scheduler(optimizer,
                   warmup_start_lr: int = 0.0,
                   total_epochs: int = -1,
                   min_lr: float = 1e-6,
-                  milestones: list[int] = None 
+                  milestones: list[int] = None,
+                  gamma: float = 0.1
                   ):
     
     scheduler_name = scheduler_name.lower()
@@ -124,9 +125,9 @@ def get_scheduler(optimizer,
 
         # fixing factor 0.1
         if warmup:
-            return WarmupStepScheduler(optimizer, warmup_epochs, milestones, warmup_start_lr) 
+            return WarmupStepScheduler(optimizer, warmup_epochs, milestones, warmup_start_lr, gamma=gamma) 
         else:
-            return WarmupStepScheduler(optimizer, 0, milestones, warmup_start_lr)
+            return WarmupStepScheduler(optimizer, 0, milestones, warmup_start_lr, gamma=gamma)
         
 
 

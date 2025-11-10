@@ -16,33 +16,38 @@ class RotNet(Trainer):
         self.criterion = nn.CrossEntropyLoss()
 
     def _compute_loss_correct(self, data: torch.Tensor, targets: torch.Tensor, **kwargs):
-        outputs, penultimate_features = self.model(data, penultimate=True)
+        outputs = self.model(data)
         loss = self.criterion(outputs, targets)
-        return loss, penultimate_features
+        return loss
     
-    def _forward_epoch(self, loader):
+    def _forward_epoch(self, loader, get_acc:bool = False):
         samples = 0
         total_loss = 0
 
-        penultimate_features = torch.empty((0, self.model.feature_dim)).to(self.device)
-        targets_list = torch.empty((0,)).to(self.device)
+        penultimate_features_list = []
+        targets_list = []
+        
 
         for batch in tqdm(loader, leave=False):
 
             data= batch['data'].to(self.device)
             targets = batch['targets'].to(self.device)
-            samples += data.size(0)
+
+            rotated_data_list = []
+            rotated_targets_list = []
 
             # rotate the images and make new targets(rotation)
-            rand = torch.randint(0, 4, (data.size(0),), device=data.device)
-            rotated_data = torch.zeros_like(data)
-            for i in range(len(rand)):
-                rotated_data[i] = torch.rot90(data[i], k=rand[i], dims=[1,2])
+            for k in range(4):
+                rotated_batch = torch.rot90(data, k=k, dims=[2, 3])
+                rotated_data_list.append(rotated_batch)
+                rotated_targets_list.append(torch.full((data.size(0),), k, device=data.device))
 
-            loss, penultimate_output = self._compute_loss_correct(rotated_data, targets=rand)
-            total_loss += loss.item() * data.size(0)
-            penultimate_features = torch.cat((penultimate_features, penultimate_output), dim=0)
-            targets_list = torch.cat((targets_list, targets), dim=0)
+            rotated_data = torch.cat(rotated_data_list, dim=0)
+            rotated_targets = torch.cat(rotated_targets_list, dim=0)
+            samples += data.size(0) * 4
+
+            loss = self._compute_loss_correct(rotated_data, targets=rotated_targets)
+            total_loss += loss.item() * rotated_data.size(0)
 
             if self.model.training:
                 self.optimizer.zero_grad()
@@ -53,7 +58,24 @@ class RotNet(Trainer):
         
                 self.optimizer.step()
 
-        acc = self._compute_knn(penultimate_features, targets_list, metric='euclidean')
+        if get_acc:
+            self.model.eval()
+            with torch.no_grad():
+                for batch in loader:
+                    data= batch['data'].to(self.device)
+                    targets = batch['targets'].to(self.device)
+
+                    _, penultimate_features_batch = self.model(data, penultimate=True)
+                    penultimate_features_list.append(penultimate_features_batch)
+                    targets_list.append(targets)
+
+                penultimate_features = torch.cat(penultimate_features_list, dim=0)
+                targets = torch.cat(targets_list, dim=0)
+
+                acc = self._compute_knn(penultimate_features, targets, metric='euclidean')
+        else:
+            acc = None
+        
         avg_loss = total_loss / samples
         return (avg_loss, acc)
     
@@ -89,3 +111,9 @@ class RotNet(Trainer):
 
         acc = correct / N * 100
         return acc
+
+    def evaluate(self, loader):
+        self.model.eval()
+        with torch.no_grad():
+            loss, acc = self._forward_epoch(loader, get_acc=True)
+        return loss, acc

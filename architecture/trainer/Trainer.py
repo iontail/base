@@ -28,7 +28,7 @@ class Trainer(ABC):
         self.grad_clip = self.args.grad_clip
         self.use_grad_clip = False if self.grad_clip < 0 else True
 
-        self.milestones = [82, 123] # if you specify milestone, then define this instance variable
+        self.milestones = [30, 60, 90] # if you specify milestone, then define this instance variable
         #self.milestones = [150, 225]
         self.scheduler = get_scheduler(optimizer=self.optimizer,
                                        scheduler_name=args.scheduler,
@@ -36,7 +36,8 @@ class Trainer(ABC):
                                        warmup_start_lr=args.warmup_start_lr,
                                        total_epochs=args.epochs,
                                        min_lr=1e-6,
-                                       milestones=self.milestones
+                                       milestones=self.milestones,
+                                       gamma=args.gamma
                                        )
         
         self.val_freq = args.val_freq
@@ -71,18 +72,31 @@ class Trainer(ABC):
             )
 
         best = float('-inf')
+        train_acc = 0
         for epoch in range(self.epochs):
             
             self.model.train()
-            loss, acc = self._forward_epoch(train_dl)
 
-            train_metrics = {'loss': loss, 'acc': acc}
+            if ((epoch + 1) % self.val_freq == 0) or (epoch == self.epochs - 1):
+                if self.args.learning != "sl":
+                    get_acc = True
+                else:
+                    get_acc = False
+            else:
+                get_acc = False
+
+            loss, acc = self._forward_epoch(train_dl, get_acc=get_acc)
+
+            if get_acc:
+                train_acc = acc
+
+            train_metrics = {'loss': loss, 'acc': train_acc}
 
             if ((epoch + 1) % self.val_freq == 0) or (epoch == self.epochs - 1):
                 
                 self.model.eval()
                 with torch.no_grad():
-                    val_loss, val_acc = self._forward_epoch(val_dl)
+                    val_loss, val_acc = self._forward_epoch(val_dl, get_acc=get_acc)
                     val_metrics = {'loss': val_loss, 'acc': val_acc}
 
                 # save checkpoint
@@ -127,7 +141,7 @@ class Trainer(ABC):
                 'best': best
             }, step=epoch)
 
-    def _forward_epoch(self, loader):
+    def _forward_epoch(self, loader, **kwargs):
         samples = 0
         total_loss = 0
         total_correct = 0

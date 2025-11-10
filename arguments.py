@@ -32,6 +32,7 @@ def parse_arguments():
     parser.add_argument('--weight_decay', type=float, default=1e-4)
     parser.add_argument('--cutmix', action='store_true')
     parser.add_argument('--grad_clip', type=float, default=-1.0) # if <0, deactivate gradient clip
+    parser.add_argument('--gamma', type=float, default=0.1, help='lr decay factor')
 
     # log
     parser.add_argument('--use_wandb', action='store_false')
