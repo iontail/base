@@ -81,7 +81,6 @@ class RotNet(Trainer):
     
     def _compute_knn(self, penultimate_features, targets_list, metric:str='euclidean'):
         """
-        Compute knn metric by loop
         Args:
             penultimate_features: (N, D) tensor
             targets_list: (N,) tensor
