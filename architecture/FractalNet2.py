@@ -82,10 +82,10 @@ class FractalBlock2(nn.Module):
         col_index = self.depth - 1
         global_mask = torch.zeros(2, num_global, device=device) 
         
-        # case 1: g_drop_col >= col_index
-        is_active_col = (g_drop_col >= col_index)
-        global_mask[0, is_active_col] = 1.0 # current_out
-        global_mask[1, is_active_col] = 1.0 # sub_out
+        # case 1: g_drop_col == col_index -> stop recursion
+        is_current_col = (g_drop_col == col_index)
+        global_mask[0, is_current_col] = 1.0 # current_out
+        global_mask[1, is_current_col] = 0.0 # sub_out
 
         # case 2: g_drop_col < col_index
         is_sub_col = (g_drop_col < col_index)
