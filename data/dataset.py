@@ -21,27 +21,16 @@ def get_dataset(name: str = 'cifar10',
     default_augment_list = [transforms.ToTensor()]
     transform_list = []
 
-    if default_augment and train:
+    if train:
         transform_list.append(transforms.Pad(4))
         transform_list.append(transforms.RandomCrop(32))
         transform_list.append(transforms.RandomHorizontalFlip(0.5))
 
-    elif hard_augment and train:
-        transform_list.append(transforms.RandomCrop(32, padding=4))
-        transform_list.append(transforms.RandomHorizontalFlip(0.5))
-        transform_list.append(transforms.RandAugment(magnitude=12))
-        transform_list.append(transforms.ColorJitter())
-
-    """
-    if rand_augment and train:
-        transform_list.append(transforms.RandAugment(num_ops=2, magnitude=9))
-
-    if color_jitter and train:
-        transform_list.append(transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1))
-
-    if rand_erasing and train: # RandomErasing must be appled between ToTensor() and Normalize()
-        default_augment_list.append(transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3)))
-    """
+    elif default_augment and train:
+        transform_list.append(transforms.RandomResizedCrop(32, scale=(0.2, 1.0)))
+        transform_list.append(transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8))
+        transform_list.append(transforms.RandomGrayscale(p=0.2))
+        transform_list.append(transforms.RandomHorizontalFlip())
     
     if name == 'cifar10':
         default_augment_list.append(transforms.Normalize(mean=cifar10_mean, std=cifar10_std))
