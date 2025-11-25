@@ -6,7 +6,7 @@ def get_dataset(name: str = 'cifar10',
                 root: str = './data',
                 train: bool = False,
                 default_augment: bool = False,
-                hard_augment: bool = False
+                no_augment: bool = False
                 ):
     
     name = name.lower()
@@ -42,6 +42,9 @@ def get_dataset(name: str = 'cifar10',
         total_transforms = transforms.Compose(transform_list + default_augment_list)
     else:
         total_transforms = transforms.Compose(default_augment_list)
+
+    if no_augment:
+        total_transforms = transforms.Compose([transforms.ToTensor()])
 
 
     if name == 'cifar10':
