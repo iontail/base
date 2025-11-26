@@ -4,7 +4,7 @@ import numpy as np
 
 from arguments import parse_arguments
 from data.dataloader import get_dataloader
-from architecture import get_model, SL, RotNet
+from architecture import get_model, SL, RotNet, SimCLR, MoCo_Trainer
 
 
 def _setup_reproducibility(seed: int = 42):
@@ -65,6 +65,10 @@ def main():
         trainer = SL(model=model, args=args, device=device)
     elif args.learning == 'rotnet':
         trainer = RotNet(model=model, args=args, device=device)
+    elif args.learning == 'simclr':
+        trainer = SimCLR(model=model, args=args, device=device)
+    elif args.learning == 'moco':
+        trainer = MoCo_Trainer(model=model, args=args, device=device)
     else:
         pass
     

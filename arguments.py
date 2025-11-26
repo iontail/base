@@ -12,6 +12,7 @@ def parse_arguments():
     # model specified arguments
     parser.add_argument('--growth_rate', type=int, default=12,
                         help="Growth rate for DenseNet100")
+    parser.add_argument('--moco_momentum', type=float, default=0.999)
 
     # data
     parser.add_argument('--data', type=str, default='cifar10')
