@@ -34,7 +34,7 @@ class MoCo(nn.Module):
         super(MoCo, self).__init__()
 
         self.device = device
-        self.encoder_q = encoder
+        self.encoder_q = encoder.to(device)
         self.momentum = args.moco_momentum
 
         #freeze encoer_k
@@ -157,6 +157,8 @@ class MoCo_Trainer(Trainer):
         penultimate_features_list = []
         targets_list = []
         
+        # always set encoder_k eval mode 
+        self.model.encoder_k.eval()
         if self.model.training:
             for batch in tqdm(loader, leave=False):
                 data= batch['data']
@@ -199,6 +201,7 @@ class MoCo_Trainer(Trainer):
                         data= batch['data']
                         targets = batch['targets'].to(self.device)
 
+                        data = torch.stack([self.model.transforms_view1(img) for img in data], dim=0).to(self.device)
                         _, h_i = self.model.encoder_q(data, penultimate=True)
                         pred = self.knn.predict(h_i, metric='euclidean')
                         correct += (pred == targets).sum().item()

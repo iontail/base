@@ -18,8 +18,9 @@ class NXTentLoss(nn.Module):
     def forward(self, z_i: torch.Tensor, z_j: torch.Tensor):
         batch = z_i.size(0)
 
+        z_i = F.normalize(z_i, dim=1)
+        z_j = F.normalize(z_j, dim=1)
         z = torch.cat([z_i, z_j], dim=0) # (2B, D)
-        z = F.normalize(z, dim=1)
 
         sim = torch.matmul(z, z.T) / self.temperature # (2B, 2B)
         mask = torch.eye(batch * 2, dtype=torch.bool, device = z.device)
