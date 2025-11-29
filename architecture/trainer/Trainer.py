@@ -28,7 +28,7 @@ class Trainer(ABC):
         self.grad_clip = self.args.grad_clip
         self.use_grad_clip = False if self.grad_clip < 0 else True
 
-        self.milestones = [30, 60, 90] # if you specify milestone, then define this instance variable
+        self.milestones = [40, 80] # if you specify milestone, then define this instance variable
         #self.milestones = [150, 225]
         self.scheduler = get_scheduler(optimizer=self.optimizer,
                                        scheduler_name=args.scheduler,

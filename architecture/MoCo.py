@@ -34,12 +34,11 @@ class MoCo(nn.Module):
         super(MoCo, self).__init__()
 
         self.device = device
-        self.encoder_q = encoder.to(device)
+        self.encoder_q = encoder
         self.momentum = args.moco_momentum
 
         #freeze encoer_k
         self.encoder_k = copy.deepcopy(encoder)
-        self.encoder_k.to(device)
         for params in self.encoder_k.parameters():
             params.requires_grad = False
                                        
@@ -56,14 +55,15 @@ class MoCo(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_channels, hidden_channels)
         )
+        self.encoder_q.to(device)
+        self.encoder_k.to(device)
 
         self.queue_size = args.queue_size
         # for reducing computation cost in transposing during computing loss
         # initialize the queue a shape of (hidden_channels, queue_size)
-        queue = torch.randn(hidden_channels, self.queue_size)
-        queue = nn.functional.normalize(queue, dim=0)
-        self.register_buffer("queue", queue)
-        self.register_buffer("queue_pointer", torch.zeros(1, dtype=torch.long))
+        self.queue = torch.randn(hidden_channels, self.queue_size, device=device)
+        self.queue = F.normalize(self.queue, dim=0)
+        self.queue_pointer = torch.zeros(1, dtype=torch.long, device=device)
 
         if args.data == 'cifar10':
             normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2470, 0.2435, 0.2616])

@@ -22,7 +22,7 @@ def parse_arguments():
     parser.add_argument('--no_augment', action='store_true')
 
     # training
-    parser.add_argument('--learning', type=str, default='sl', choices=['sl', 'rotnet'])
+    parser.add_argument('--learning', type=str, default='sl', choices=['sl', 'rotnet', 'simclr', 'moco'])
     parser.add_argument('--epochs', type=int, default=164)
     parser.add_argument('--optimizer', type=str, default='sgd')
     parser.add_argument('--scheduler', type=str, default='step')
@@ -35,7 +35,7 @@ def parse_arguments():
     parser.add_argument('--grad_clip', type=float, default=-1.0) # if <0, deactivate gradient clip
     parser.add_argument('--gamma', type=float, default=0.1, help='lr decay factor')
     parser.add_argument('--temperature', type=float, default=0.1)
-    parser.add_arugment('--queue_size', type=int, defualt=1024)
+    parser.add_argument('--queue_size', type=int, default=1024)
 
     # log
     parser.add_argument('--use_wandb', action='store_false')
