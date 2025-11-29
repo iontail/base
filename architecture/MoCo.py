@@ -211,7 +211,7 @@ class MoCo_Trainer(Trainer):
             else:
                 acc = 0
                 avg_loss = 0     
-        return (avg_loss, acc)
+        return avg_loss, acc
     
 
     def evaluate(self, loader):

@@ -100,7 +100,7 @@ class SimCLR(Trainer):
                 z_i, h_i = self.model(x_i, penultimate=True)
                 z_j, _ = self.model(x_j, penultimate=True)
                 penultimate_features_list.append(h_i.detach())
-                targets_list.append(targets)
+                targets_list.append(targets.detach())
 
                 _, loss = self.criterion(z_i, z_j)
                 total_loss += loss.item() * (data.size(0) * 2)
@@ -142,7 +142,7 @@ class SimCLR(Trainer):
             else:
                 acc = 0
                 avg_loss = 0     
-        return (avg_loss, acc)
+        return avg_loss, acc
     
 
     def evaluate(self, loader):
